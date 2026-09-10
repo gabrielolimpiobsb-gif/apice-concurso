@@ -1,0 +1,8 @@
+{
+  "name": "Apice Concurso",
+  "description": "Plataforma de estudos para concursos com IA, flashcards, radar de notícias e análise de desempenho.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

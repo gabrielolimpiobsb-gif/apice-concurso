@@ -1,0 +1,186 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User's unique identifier matching Firebase Auth UID." },
+        "email": { "type": "string", "description": "User's email address." },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "accountType": { "type": "string" },
+        "planStatus": { "type": "string", "enum": ["free", "premium"], "description": "Subscription plan status." },
+        "dailyQuestionsCount": { "type": "number", "description": "Count of questions answered today." },
+        "lastQuestionResetDate": { "type": "string", "format": "date", "description": "Date of last reset for dailyQuestionsCount." },
+        "aiFlashcardsUsedCount": { "type": "number", "description": "Lifetime count of AI-generated flashcards." },
+        "referredBy": { "type": "string", "description": "UID of the user who invited this user." },
+        "settings": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt", "planStatus"]
+    },
+    "Flashcard": {
+      "title": "Flashcard",
+      "description": "A study flashcard",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "front": { "type": "string" },
+        "back": { "type": "string" },
+        "subject": { "type": "string" },
+        "topic": { "type": "string" },
+        "source": { "type": "string", "enum": ["manual", "ai"] },
+        "sourceQuestionId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "front", "back", "source", "createdAt"]
+    },
+    "Performance": {
+      "title": "Performance Log",
+      "description": "A single attempt of a user answering a question",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User ID" },
+        "questionId": { "type": "string", "description": "ID of the question" },
+        "isCorrect": { "type": "boolean" },
+        "selectedAlternativeId": { "type": "string" },
+        "timeSpent": { "type": "number", "description": "Time spent in seconds" },
+        "answeredAt": { "type": "string", "format": "date-time" },
+        "topic": { "type": "string" },
+        "discipline": { "type": "string" }
+      },
+      "required": ["userId", "questionId", "isCorrect", "selectedAlternativeId", "answeredAt"]
+    },
+    "QuestionComment": {
+      "title": "Question Comment",
+      "description": "A comment left by a user on a specific question",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User ID of the commenter" },
+        "questionId": { "type": "string", "description": "ID of the question" },
+        "userDisplayName": { "type": "string" },
+        "userPhotoURL": { "type": "string" },
+        "text": { "type": "string", "description": "The comment text" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "questionId", "userDisplayName", "text", "createdAt"]
+    },
+    "Task": {
+      "title": "Study Task",
+      "description": "A study task or goal in the user's schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "date": { "type": "string", "description": "ISO date string YYYY-MM-DD" },
+        "type": { "type": "string", "enum": ["theory", "questions", "review", "manual"] },
+        "subject": { "type": "string" },
+        "isCycle": { "type": "boolean" },
+        "cycleHours": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "completed", "date"]
+    },
+    "CycleConfig": {
+      "title": "Cycle Configuration",
+      "description": "Configuration for the study cycle",
+      "type": "object",
+      "properties": {
+        "subjects": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "hours": { "type": "number" }
+            }
+          }
+        },
+        "totalHoursPerCycle": { "type": "number" },
+        "completedHours": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SavedFilter": {
+      "title": "Saved Filter",
+      "description": "A saved combination of question filters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "bancaSelecionada": { "type": "array", "items": { "type": "string" } },
+        "disciplinaSelecionada": { "type": "array", "items": { "type": "string" } },
+        "assuntoSelecionado": { "type": "array", "items": { "type": "string" } },
+        "anoSelecionado": { "type": "array", "items": { "type": "number" } },
+        "tipoSelecionado": { "type": "array", "items": { "type": "string" } },
+        "isFavorite": { "type": "boolean" },
+        "usageCount": { "type": "number" },
+        "lastUsed": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "createdAt"]
+    },
+    "StudySession": {
+      "title": "Study Session",
+      "description": "A saved study session to be resumed later",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "filterConfig": { "type": "object" },
+        "questionIds": { "type": "array", "items": { "type": "string" } },
+        "sessionAnswers": { "type": "object" },
+        "currentIndex": { "type": "number" },
+        "timeSpent": { "type": "number" },
+        "progress": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "questionIds", "currentIndex", "status", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles. The document ID must be the userId."
+    },
+    "/users/{userId}/performances/{performanceId}": {
+      "schema": { "$ref": "#/entities/Performance" },
+      "description": "Log of question attempts per user."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "User's study goals and schedule tasks."
+    },
+    "/users/{userId}/config/cycle": {
+      "schema": { "$ref": "#/entities/CycleConfig" },
+      "description": "Study cycle configuration."
+    },
+    "/users/{userId}/savedFilters/{filterId}": {
+      "schema": { "$ref": "#/entities/SavedFilter" },
+      "description": "User's saved filter combinations."
+    },
+    "/users/{userId}/activeSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "User's active/paused study sessions."
+    },
+    "/users/{userId}/flashcards/{flashcardId}": {
+      "schema": { "$ref": "#/entities/Flashcard" },
+      "description": "User's flashcards."
+    },
+    "/news/{newsId}": {
+      "schema": "NewsItem",
+      "description": "Global news articles. Access restricted to Premium users."
+    },
+    "/questions/{questionId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/QuestionComment" },
+      "description": "Comments left on questions. Can be viewed and added by any signed-in user."
+    }
+  }
+}

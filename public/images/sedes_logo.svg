@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sedesGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="50%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <filter id="sedesShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <circle cx="100" cy="100" r="94" fill="url(#sedesGrad)" stroke="#34D399" stroke-width="4"/>
+  <!-- Cross of Brasilia / DF motif -->
+  <path d="M100 35 L108 85 L158 92 L115 110 L135 160 L100 125 L65 160 L85 110 L42 92 L92 85 Z" fill="rgba(255,255,255,0.18)"/>
+  <rect x="25" y="82" width="150" height="38" rx="8" fill="#064e3b" stroke="#34D399" stroke-width="2" filter="url(#sedesShadow)"/>
+  <text x="100" y="108" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">SEDES-DF</text>
+  <text x="100" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="8" font-weight="700" fill="#6EE7B7" text-anchor="middle" letter-spacing="1">DESENVOLVIMENTO SOCIAL</text>
+</svg>

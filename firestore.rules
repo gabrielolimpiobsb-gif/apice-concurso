@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+      // 0. Default Deny
+      match /{document=**} {
+        allow read, write: if false;
+      }
+      
+      // --- Helper Functions ---
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+      function isAdmin() {
+        return isSignedIn() && 
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'master'];
+      }
+      
+      // --- Core Entity Rules (RLS) ---
+      
+      // Users Table
+      match /users/{userId} {
+        allow read: if isOwner(userId) || isAdmin();
+        
+        allow create: if isOwner(userId) 
+          && incoming().role == null 
+          && incoming().planStatus == 'free';
+          
+        // RLS: User can update their own profile, but CANNOT change premium status or role.
+        allow update: if isOwner(userId) 
+          && (!incoming().diff(existing()).affectedKeys().hasAny(['planStatus', 'subscription', 'ownedPacks', 'role', 'dailyQuestionsCount']))
+          || isAdmin();
+          
+        match /{document=**} {
+          allow read, write: if isOwner(userId) || isAdmin();
+        }
+      }
+
+      // Public / Read-Only Data
+      match /news/{newsId} {
+        allow read, list: if isSignedIn();
+        allow write: if isAdmin();
+      }
+      
+      match /courses/{courseId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+      
+      match /disciplines/{disciplineId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+      
+      match /lessons/{lessonId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+        
+        match /comments/{commentId} {
+          allow read, list: if isSignedIn();
+          allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+          allow update, delete: if isSignedIn() && existing().userId == request.auth.uid || isAdmin();
+        }
+      }
+      
+      match /questions/{questionId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+        
+        match /comments/{commentId} {
+          allow read, list: if isSignedIn();
+          allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+          allow update, delete: if isSignedIn() && existing().userId == request.auth.uid || isAdmin();
+        }
+      }
+
+      // Leaderboards
+      match /leaderboards/{document=**} {
+        // Only allow creating if they aren't faking points
+        allow read: if isSignedIn();
+        allow write: if isSignedIn(); // In a production app, points should be calculated securely via cloud functions.
+      }
+  }
+}

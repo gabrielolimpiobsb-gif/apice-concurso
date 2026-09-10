@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 460" width="100%" height="auto" style="max-width: 520px; font-family: sans-serif; background: #ffffff; border-radius: 12px; padding: 12px; border: 1px solid #e2e8f0;">
+  <text x="270" y="24" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Tipos de Clima do Brasil</text>
+  
+  <!-- Legenda -->
+  <g transform="translate(20, 45)" font-size="12" fill="#334155">
+    <rect x="0" y="0" width="16" height="12" fill="#e05315" rx="2" />
+    <text x="22" y="10">Equatorial Úmido</text>
+
+    <rect x="0" y="20" width="16" height="12" fill="#f59e0b" rx="2" />
+    <text x="22" y="30">Tropical Semiárido</text>
+
+    <rect x="0" y="40" width="16" height="12" fill="#15803d" rx="2" />
+    <text x="22" y="50">Subtropical</text>
+
+    <rect x="0" y="60" width="16" height="12" fill="#fb923c" rx="2" />
+    <text x="22" y="70">Tropical</text>
+
+    <rect x="0" y="80" width="16" height="12" fill="#1e3a8a" rx="2" />
+    <text x="22" y="90">Tropical Atlântico</text>
+
+    <rect x="0" y="100" width="16" height="12" fill="#ca8a04" rx="2" />
+    <text x="22" y="110">Tropical de Altitude</text>
+  </g>
+
+  <!-- Mapa esquemático do Brasil com divisões climáticas -->
+  <g transform="translate(140, 45)">
+    <!-- Base do contorno simplificado das macroregiões climáticas -->
+    <!-- Norte / Amazônia: Equatorial Úmido -->
+    <path d="M 50,70 Q 70,30 140,25 Q 220,20 260,70 Q 240,110 200,140 Q 150,150 110,130 Q 50,120 50,70 Z" fill="#e05315" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+    <text x="140" y="85" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Equatorial Úmido</text>
+
+    <!-- Centro-Oeste e partes do Sudeste/Nordeste: Tropical -->
+    <path d="M 110,130 Q 150,150 200,140 Q 240,160 250,210 Q 230,260 170,260 Q 130,240 110,180 Z" fill="#fb923c" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+    <text x="170" y="200" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Tropical</text>
+
+    <!-- Interior Nordeste: Tropical Semiárido -->
+    <path d="M 220,100 Q 280,75 320,105 Q 310,150 260,170 Q 235,140 220,100 Z" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+    <text x="270" y="130" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">Semiárido</text>
+
+    <!-- Faixa Litorânea Nordeste ao Sudeste: Tropical Atlântico -->
+    <path d="M 320,105 Q 340,130 320,170 Q 290,230 260,280 L 245,275 Q 275,225 305,160 Q 320,130 320,105 Z" fill="#1e3a8a" stroke="#ffffff" stroke-width="1.5" opacity="0.95" />
+    <text x="325" y="210" font-size="10" font-weight="bold" fill="#1e3a8a" transform="rotate(65 325,210)">Tropical Atlântico</text>
+
+    <!-- Áreas serranas do Sudeste: Tropical de Altitude -->
+    <ellipse cx="230" cy="260" rx="20" ry="12" fill="#ca8a04" stroke="#ffffff" stroke-width="1" />
+    <text x="230" y="264" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">Altitude</text>
+
+    <!-- Região Sul: Subtropical -->
+    <path d="M 160,260 Q 210,260 220,290 Q 210,360 170,360 Q 140,320 160,260 Z" fill="#15803d" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+    <text x="185" y="315" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Subtropical</text>
+
+    <!-- Oceano Atlântico -->
+    <text x="310" y="340" font-size="11" font-style="italic" fill="#64748b">Oceano Atlântico</text>
+  </g>
+
+  <text x="270" y="445" text-anchor="middle" font-size="10" fill="#64748b">Fonte: suportegeografico.com/2023/04/climas-do-brasil.html</text>
+</svg>
