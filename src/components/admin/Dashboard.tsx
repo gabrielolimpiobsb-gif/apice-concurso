@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, CreditCard, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { Users, CreditCard, TrendingUp, DollarSign, Activity, BookOpen } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -52,11 +52,12 @@ export function Dashboard() {
         <p className="text-black dark:text-black/50 dark:text-white/50 text-sm mt-1">Visão geral do negócio.</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Usuários Cadastrados" value={stats?.totalUsers || 0} icon={Users} color="text-blue-400" bg="bg-blue-400/10" />
         <StatCard title="Assinantes Ativos" value={stats?.activeSubscribers || 0} icon={CreditCard} color="text-green-400" bg="bg-green-400/10" />
-        <StatCard title="Receita Mensal" value={`R$ ${(stats?.monthlyRevenue || 0).toFixed(2)}`} icon={DollarSign} color="text-emerald-400" bg="bg-emerald-400/10" />
-        <StatCard title="Próximo Mês" value={`R$ ${(stats?.potentialEarnings || 0).toFixed(2)}`} subtitle="Estimativa" icon={TrendingUp} color="text-purple-400" bg="bg-purple-400/10" />
+        <StatCard title="Receita Mensalidade" value={`R$ ${(stats?.monthlyRevenue || 0).toFixed(2)}`} icon={DollarSign} color="text-emerald-400" bg="bg-emerald-400/10" />
+        <StatCard title="Receita Flashcards" value={`R$ ${(stats?.flashcardRevenue || 0).toFixed(2)}`} subtitle={`${stats?.flashcardSalesCount || 0} compras Stripe`} icon={BookOpen} color="text-amber-400" bg="bg-amber-400/10" />
+        <StatCard title="Próximo Mês" value={`R$ ${(stats?.potentialEarnings || 0).toFixed(2)}`} subtitle="Estimativa Assinaturas" icon={TrendingUp} color="text-purple-400" bg="bg-purple-400/10" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

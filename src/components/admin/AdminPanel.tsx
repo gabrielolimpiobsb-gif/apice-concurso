@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Users, CreditCard, MessageSquare, Shield, Activity, Settings, LogOut, LayoutDashboard, ChevronLeft } from 'lucide-react';
+import { Users, CreditCard, MessageSquare, Shield, Activity, Settings, LogOut, LayoutDashboard, ChevronLeft, BookOpen } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Dashboard } from './Dashboard';
 import { UsersList } from './UsersList';
 import { SubscriptionsList } from './SubscriptionsList';
+import { FlashcardsSalesAnalysis } from './FlashcardsSalesAnalysis';
 import { FeedbacksList } from './FeedbacksList';
 import { AdminsList } from './AdminsList';
 import { ActivityLogs } from './ActivityLogs';
 
-export type AdminTab = 'dashboard' | 'users' | 'subscriptions' | 'feedbacks' | 'admins' | 'logs';
+export type AdminTab = 'dashboard' | 'flashcards' | 'users' | 'subscriptions' | 'feedbacks' | 'admins' | 'logs';
 
 export function AdminPanel({ onBack }: { onBack: () => void }) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -16,6 +17,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
+      case 'flashcards': return <FlashcardsSalesAnalysis />;
       case 'users': return <UsersList />;
       case 'subscriptions': return <SubscriptionsList />;
       case 'feedbacks': return <FeedbacksList />;
@@ -27,6 +29,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'flashcards', label: 'Vendas Flashcards', icon: BookOpen },
     { id: 'users', label: 'Usuários', icon: Users },
     { id: 'subscriptions', label: 'Assinaturas', icon: CreditCard },
     { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare },

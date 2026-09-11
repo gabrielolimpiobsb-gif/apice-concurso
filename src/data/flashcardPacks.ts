@@ -3065,6 +3065,866 @@ export const AVAILABLE_PACKS = [
       "back": "É uma proposição composta que será SEMPRE VERDADEIRA, independentemente dos valores de suas proposições simples.",
       "subject": "Raciocínio Lógico"
     }
+  ]},{
+  "id": "pack_detran_sp",
+  "title": "Pacote DETRAN SP",
+  "description": "Pacote completo com foco no concurso do DETRAN SP. Abrange CTB, Resoluções CONTRAN, Direito Administrativo e Constitucional, Legislação de SP, Português, RLM e Informática.",
+  "price": 6.79,
+  "stripePriceId": "",
+  "coverColor": "from-[#ef4444] to-[#991b1b]",
+  "imageUrl": "/pacote_detran_sp.jpg",
+  "cardsCount": 170,
+  "flashcards": [
+    {
+      "front": "Qual o órgão máximo normativo e consultivo do SNT?",
+      "back": "CONTRAN (Conselho Nacional de Trânsito).",
+      "subject": "CTB"
+    },
+    {
+      "front": "Quem compõe o SNT nos Estados e no DF?",
+      "back": "CETRAN e CONTRANDIFE.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a validade da CNH para condutores com menos de 50 anos?",
+      "back": "10 anos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a validade da CNH para condutores de 50 a 69 anos?",
+      "back": "5 anos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a validade da CNH para condutores com 70 anos ou mais?",
+      "back": "3 anos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a idade mínima para habilitação nas categorias D e E?",
+      "back": "21 anos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Quantos pontos geram a suspensão da CNH se o condutor tiver 2 infrações gravíssimas?",
+      "back": "20 pontos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Quantos pontos geram a suspensão se o condutor tiver apenas 1 infração gravíssima?",
+      "back": "30 pontos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Quantos pontos geram suspensão se não houver nenhuma infração gravíssima?",
+      "back": "40 pontos.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a regra de pontuação para o condutor que exerce atividade remunerada (EAR)?",
+      "back": "40 pontos, independentemente da gravidade das infrações.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Usar o celular segurando ou manuseando é qual tipo de infração?",
+      "back": "Gravíssima.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Dirigir sob influência de álcool é infração de qual natureza?",
+      "back": "Gravíssima (multiplicada por 10) + suspensão por 12 meses.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a velocidade máxima em vias de trânsito rápido sem sinalização?",
+      "back": "80 km/h.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a velocidade máxima em vias arteriais sem sinalização?",
+      "back": "60 km/h.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a velocidade máxima em vias coletoras sem sinalização?",
+      "back": "40 km/h.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a velocidade máxima em vias locais sem sinalização?",
+      "back": "30 km/h.",
+      "subject": "CTB"
+    },
+    {
+      "front": "De quem é a preferência em um cruzamento não sinalizado?",
+      "back": "Do veículo que vem pela direita.",
+      "subject": "CTB"
+    },
+    {
+      "front": "De quem é a preferência em uma rotatória não sinalizada?",
+      "back": "Do veículo que já estiver circulando por ela.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Crianças de qual idade devem ser transportadas no banco traseiro?",
+      "back": "Menores de 10 anos que não tenham atingido 1,45m de altura.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a validade da Permissão Para Dirigir (PPD)?",
+      "back": "1 ano.",
+      "subject": "CTB"
+    },
+    {
+      "front": "O que impede o condutor de pegar a CNH definitiva após a PPD?",
+      "back": "Ter cometido infração grave, gravíssima, ou ser reincidente em infração média.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a categoria para dirigir veículos de até 8 lugares (excluindo motorista) e PBT até 3.500 kg?",
+      "back": "Categoria B.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a categoria para transporte de carga com PBT superior a 3.500 kg?",
+      "back": "Categoria C.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a categoria para transporte de passageiros com mais de 8 lugares?",
+      "back": "Categoria D.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a categoria para combinações de veículos (ex: carreta)?",
+      "back": "Categoria E.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual órgão expede a CNH?",
+      "back": "DETRAN (Órgão executivo estadual).",
+      "subject": "CTB"
+    },
+    {
+      "front": "O cinto de segurança é obrigatório para quem?",
+      "back": "Condutor e todos os passageiros em todas as vias.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Deixar de prestar socorro à vítima de acidente é qual infração?",
+      "back": "Gravíssima (multiplicada por 5) + suspensão.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Disputar corrida (\"racha\") é infração de qual gravidade?",
+      "back": "Gravíssima (multiplicada por 10) + suspensão e apreensão do veículo.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Transitar na contramão em via de sentido único é qual infração?",
+      "back": "Gravíssima.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Transitar na contramão em via de sentido duplo (onde não for permitido) é qual infração?",
+      "back": "Grave.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Estacionar na faixa de pedestres é qual infração?",
+      "back": "Grave.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Estacionar em vagas de idoso/PcD sem credencial é qual infração?",
+      "back": "Gravíssima.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a cor da sinalização de regulamentação?",
+      "back": "Vermelha, branca e preta.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual a cor da sinalização de advertência?",
+      "back": "Amarela e preta.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Renovar o licenciamento anual do veículo é de responsabilidade de quem?",
+      "back": "Do proprietário do veículo.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual prazo o condutor tem para indicar o real infrator?",
+      "back": "30 dias após a notificação da autuação.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual prazo o proprietário tem para transferir o veículo vendido?",
+      "back": "30 dias.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Qual o prazo para o vendedor comunicar a venda ao DETRAN?",
+      "back": "60 dias.",
+      "subject": "CTB"
+    },
+    {
+      "front": "Recusar-se ao teste do bafômetro gera a mesma punição de embriaguez?",
+      "back": "Sim (infração gravíssima x10 + suspensão).",
+      "subject": "CTB"
+    },
+    {
+      "front": "A película (insulfilm) no para-brisa deve ter qual transmitância luminosa mínima?",
+      "back": "70%.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "É permitido o uso de faróis de xenônio?",
+      "back": "Apenas se original de fábrica. Instalação posterior é proibida.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual a tolerância de peso por eixo em veículos de carga?",
+      "back": "12,5% sobre os limites de peso bruto transmitido por eixo.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "O uso de cadeirinha é obrigatório até qual idade?",
+      "back": "4 a 7 anos e meio.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Bebê conforto é utilizado por crianças de qual idade?",
+      "back": "Até 1 ano de idade (ou até 13 kg).",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Assento de elevação (booster) é para crianças de qual idade?",
+      "back": "De 7 anos e meio a 10 anos (menores de 1,45m).",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "É obrigatório o uso de estepe em todos os veículos?",
+      "back": "Sim, exceto naqueles equipados com pneus run-flat ou sistema de reparo original.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Veículos de carga devem usar faixas refletivas?",
+      "back": "Sim, obrigatório na lateral e traseira para veículos com PBT superior a 4.536 kg.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual o padrão atual das placas de veículos no Brasil?",
+      "back": "Padrão Mercosul.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual cor da fonte indica veículo comercial/aluguel no padrão Mercosul?",
+      "back": "Vermelha.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual cor da fonte indica veículo oficial no padrão Mercosul?",
+      "back": "Azul.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual cor da fonte indica veículo de coleção no padrão Mercosul?",
+      "back": "Cinza (prata).",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual a profundidade mínima dos sulcos dos pneus?",
+      "back": "1,6 milímetros.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual exame é obrigatório para renovar categorias C, D e E?",
+      "back": "Exame toxicológico.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "Qual a validade do exame toxicológico?",
+      "back": "2 anos e 6 meses para condutores com menos de 70 anos.",
+      "subject": "Resoluções CONTRAN"
+    },
+    {
+      "front": "O que é a Administração Direta?",
+      "back": "União, Estados, DF e Municípios (entes políticos).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é a Administração Indireta?",
+      "back": "Autarquias, Fundações Públicas, Empresas Públicas e Sociedades de Economia Mista.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Qual princípio exige que o agente público atue com ética e honestidade?",
+      "back": "Moralidade.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Qual princípio impede a promoção pessoal com recursos públicos?",
+      "back": "Impessoalidade.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que dita o princípio da Legalidade no setor público?",
+      "back": "O administrador só pode fazer o que a lei autoriza ou determina.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é o poder de Polícia?",
+      "back": "Prerrogativa do Estado de restringir direitos individuais em prol do interesse coletivo (ex: fiscalização de trânsito).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Quais os atributos do ato administrativo? (Dica: PATI)",
+      "back": "Presunção de Legitimidade, Autoexecutoriedade, Tipicidade e Imperatividade.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é a anulação de um ato administrativo?",
+      "back": "Extinção de um ato ilegal, com efeitos retroativos (ex tunc).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é a revogação de um ato administrativo?",
+      "back": "Extinção de um ato legal por motivo de conveniência e oportunidade, sem retroagir (ex nunc).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O DETRAN-SP tem qual natureza jurídica?",
+      "back": "Autarquia.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que caracteriza uma Autarquia?",
+      "back": "Pessoa jurídica de direito público, criada por lei, para executar atividades típicas de Estado.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Quem responde objetivamente pelos danos causados por agentes públicos?",
+      "back": "O Estado (Pessoa Jurídica de Direito Público ou Privado prestadora de serviço público).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Agente público tem responsabilidade objetiva ou subjetiva?",
+      "back": "Subjetiva (depende de dolo ou culpa comprovada em ação regressiva).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é o Poder Hierárquico?",
+      "back": "Poder de distribuir, escalonar funções, dar ordens e fiscalizar subordinados.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é o Poder Disciplinar?",
+      "back": "Poder de apurar infrações e aplicar penalidades aos servidores e àqueles sujeitos à disciplina do órgão.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Atos de improbidade que causam prejuízo ao erário exigem dolo ou culpa?",
+      "back": "Apenas dolo (após a reforma da Lei 14.230/2021).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Nepotismo fere qual princípio administrativo expressamente?",
+      "back": "Impessoalidade e Moralidade (Súmula Vinculante 13).",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Contrato temporário (ex: emergência) precisa de concurso público?",
+      "back": "Não, exige apenas processo seletivo simplificado.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é o atributo da autoexecutoriedade?",
+      "back": "A administração executar seus atos sem precisar de ordem judicial.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "O que é a avocação de competência?",
+      "back": "Puxar para si (superior) temporariamente a competência de um subordinado, em caráter excepcional.",
+      "subject": "Direito Administrativo"
+    },
+    {
+      "front": "Quais os fundamentos da República? (Dica: SO-CI-DI-VA-PLU)",
+      "back": "Soberania, Cidadania, Dignidade da pessoa humana, Valores sociais do trabalho/livre iniciativa, Pluralismo político.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Quais são os Poderes da União?",
+      "back": "Legislativo, Executivo e Judiciário (independentes e harmônicos).",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Homens e mulheres são iguais em direitos e obrigações?",
+      "back": "Sim, nos termos da Constituição.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "A casa é asilo inviolável, salvo em quais situações noturnas?",
+      "back": "Apenas em caso de desastre, para prestar socorro ou flagrante delito (nunca por ordem judicial à noite).",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Quando a ordem judicial de busca e apreensão pode ser cumprida?",
+      "back": "Apenas durante o dia.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Há penas de morte no Brasil?",
+      "back": "Sim, mas apenas em caso de guerra declarada.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "O que é Habeas Corpus?",
+      "back": "Remédio constitucional para proteger o direito de ir, vir e ficar (liberdade de locomoção).",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "O que é Habeas Data?",
+      "back": "Remédio para conhecer ou retificar informações pessoais constantes em bancos de dados governamentais ou públicos.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "O que é Mandado de Segurança?",
+      "back": "Remédio para proteger direito líquido e certo não amparado por HC ou HD.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Quem compõe a segurança viária na CF/88?",
+      "back": "Educação, engenharia e fiscalização de trânsito, agentes de trânsito estruturados em carreira.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "De quem é a competência privativa para legislar sobre trânsito e transporte?",
+      "back": "Da União.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Estrangeiros residentes no Brasil têm direitos fundamentais?",
+      "back": "Sim, a Constituição garante a inviolabilidade dos direitos à vida, liberdade, igualdade, segurança e propriedade.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "O direito de greve no serviço público é absoluto?",
+      "back": "Não, deve ser exercido nos termos e limites definidos em lei específica.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "Cargos em comissão destinam-se a quais funções?",
+      "back": "Apenas direção, chefia e assessoramento.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "É permitida a acumulação remunerada de cargos públicos?",
+      "back": "Regra geral não, exceto: 2 de professor; 1 de professor com 1 técnico/científico; 2 privativos de profissionais de saúde, havendo compatibilidade de horários.",
+      "subject": "Direito Constitucional"
+    },
+    {
+      "front": "O DETRAN-SP está vinculado a qual secretaria estadual?",
+      "back": "Secretaria de Gestão e Governo Digital (atualização de estruturação do governo SP).",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual o regime jurídico dos servidores do DETRAN-SP?",
+      "back": "CLT (Celetista), conforme a Lei Complementar 1.195/2013.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "O DETRAN-SP tem autonomia financeira?",
+      "back": "Sim, por ser uma autarquia.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Quem nomeia o Diretor-Presidente do DETRAN-SP?",
+      "back": "O Governador do Estado.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Quais as principais carreiras do DETRAN-SP pela LC 1.195/13?",
+      "back": "Oficial Estadual de Trânsito e Agente Estadual de Trânsito.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual a escolaridade para Agente Estadual de Trânsito?",
+      "back": "Nível Superior.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual a escolaridade para Oficial Estadual de Trânsito?",
+      "back": "Nível Médio.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual lei estadual rege o processo administrativo em SP?",
+      "back": "Lei Estadual nº 10.177/1998.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual o prazo geral para a Administração decidir processos administrativos em SP?",
+      "back": "120 dias, salvo previsão legal específica.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Pela LGPD e decretos estaduais, qual a base legal principal para o DETRAN tratar dados de condutores?",
+      "back": "Execução de políticas públicas e cumprimento de obrigação legal.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "O que compõe a remuneração do Agente de Trânsito do DETRAN-SP?",
+      "back": "Salário base e Gratificação pelo Desempenho de Atividades no DETRAN-SP (GDAD).",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "A GDAD é incorporada definitivamente ao salário?",
+      "back": "Não, ela é transitória e depende de avaliação de desempenho.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Servidores celetistas do DETRAN-SP têm estabilidade no emprego?",
+      "back": "Não possuem a estabilidade estatutária, mas a demissão exige motivação em processo administrativo.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual a carga horária semanal dos agentes do DETRAN-SP?",
+      "back": "40 horas semanais.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual o prazo para interpor recurso no processo administrativo paulista (Lei 10.177/98)?",
+      "back": "15 dias, contados da publicação ou notificação.",
+      "subject": "Legislação Estadual SP"
+    },
+    {
+      "front": "Qual a função sintática do termo sublinhado: \"O fiscal multou o motorista infrator\"?",
+      "back": "Objeto direto.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função sintática do termo sublinhado: \"O documento foi entregue ao diretor\"?",
+      "back": "Objeto indireto.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Classifique o sujeito: \"Choveram multas na rodovia.\"",
+      "back": "Sujeito simples (verbo chover em sentido figurado tem sujeito).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Classifique o sujeito: \"Precisa-se de agentes.\"",
+      "back": "Sujeito indeterminado (verbo transitivo indireto + índice de indeterminação \"se\").",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função sintática de \"se\" em \"Venderam-se os carros\"?",
+      "back": "Partícula apassivadora (carros foram vendidos).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função sintática do termo sublinhado: \"Aprovar a lei é necessário.\"",
+      "back": "Sujeito oracional (Oração Subordinada Substantiva Subjetiva).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função sintática do adjetivo: \"O carro apreendido estava no pátio.\"",
+      "back": "Adjunto adnominal.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função sintática do adjetivo: \"O juiz julgou o recurso improcedente.\"",
+      "back": "Predicativo do objeto.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a regência do verbo \"assistir\" no sentido de ver/presenciar?",
+      "back": "Transitivo indireto (exige preposição \"a\" - assistiu ao acidente).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a regência do verbo \"visar\" no sentido de almejar/objetivar?",
+      "back": "Transitivo indireto (exige preposição \"a\" - visava ao cargo).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "A crase é obrigatória antes de palavras masculinas?",
+      "back": "Não, é proibida (salvo locuções implícitas como \"à moda de\").",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Vai crase em \"dirigiu-se a pé\"?",
+      "back": "Não, não há crase antes de palavra masculina.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a diferença de \"mal\" e \"mau\"?",
+      "back": "\"Mal\" é advérbio (contrário de bem); \"mau\" é adjetivo (contrário de bom).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Onde fica o acento da palavra \"rubrica\"?",
+      "back": "Na sílaba \"bri\" (é paroxítona, ru-BRI-ca, não tem acento gráfico).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Como se classifica a oração: \"Quando a chuva parou, ele viajou\"?",
+      "back": "Oração subordinada adverbial temporal.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a figura de linguagem em: \"Ele tem um mar de problemas\"?",
+      "back": "Metáfora.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Em \"Vossa Excelência aprovou a lei?\", o verbo concorda em qual pessoa?",
+      "back": "Terceira pessoa (do singular).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "A palavra \"táxi\" é acentuada por qual regra?",
+      "back": "Paroxítona terminada em \"i\".",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "\"Apesar de\" expressa qual valor semântico em uma conjunção?",
+      "back": "Concessão.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "\"Portanto\" expressa qual valor semântico?",
+      "back": "Conclusão.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função sintática de \"Maria\" em: \"Maria, traga o documento\"?",
+      "back": "Vocativo.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Na voz passiva \"A lei foi aprovada pelo congresso\", o que é \"pelo congresso\"?",
+      "back": "Agente da passiva.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função de \"que\" em \"A lei que foi aprovada é boa\"?",
+      "back": "Pronome relativo (retoma \"lei\").",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a função de \"que\" em \"Eu acho que ele passou\"?",
+      "back": "Conjunção integrante (inicia oração substantiva).",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Plural de \"cidadão\"?",
+      "back": "Cidadãos.",
+      "subject": "Língua Portuguesa"
+    },
+    {
+      "front": "Qual a negação lógica de \"A e B\" (Proposição p ^ q)?",
+      "back": "\"Não A ou Não B\" (~p v ~q) - Lei de De Morgan.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Qual a negação de \"Se A, então B\" (p -> q)?",
+      "back": "\"A e Não B\" (p ^ ~q). Mantém a primeira e nega a segunda.",
+      "subject": "RLM"
+    },
+    {
+      "front": "O que é uma Tautologia?",
+      "back": "Proposição composta que é sempre verdadeira, independente dos valores lógicos das partes.",
+      "subject": "RLM"
+    },
+    {
+      "front": "O que é uma Contradição?",
+      "back": "Proposição composta que é sempre falsa.",
+      "subject": "RLM"
+    },
+    {
+      "front": "O que é uma Contingência?",
+      "back": "Proposição que pode ser verdadeira ou falsa.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Na tabela verdade do \"OU\" (Disjunção inclusiva), quando a resposta é falsa?",
+      "back": "Apenas quando ambas as proposições forem falsas (F v F = F).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Na tabela verdade do \"E\" (Conjunção), quando a resposta é verdadeira?",
+      "back": "Apenas quando ambas forem verdadeiras (V ^ V = V).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Na tabela verdade do \"Se... então\" (Condicional), qual o único caso falso?",
+      "back": "Vera Fischer é Falsa (V -> F = F).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Como calcular a probabilidade de um evento?",
+      "back": "Casos favoráveis divididos pelos casos possíveis.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Qual a fórmula da Análise Combinatória para Combinação simples?",
+      "back": "C(n,p) = n! / [p! * (n-p)!] (A ordem não importa).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Qual a fórmula para Arranjo simples?",
+      "back": "A(n,p) = n! / (n-p)! (A ordem importa).",
+      "subject": "RLM"
+    },
+    {
+      "front": "20% de 20% é equivalente a qual porcentagem?",
+      "back": "4% (0,20 x 0,20 = 0,04).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Como se nega o quantificador \"Todo\"?",
+      "back": "Algum não é / Pelo menos um não é / Existe um que não é.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Como se nega o quantificador \"Nenhum\"?",
+      "back": "Algum é / Pelo menos um é.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Como se nega \"Algum\"?",
+      "back": "Nenhum.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Qual a equivalência lógica de \"Se A, então B\" (Contrapositiva)?",
+      "back": "\"Se não B, então não A\" (~q -> ~p).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Qual a equivalência lógica de \"Se A, então B\" (Regra do Neymar)?",
+      "back": "\"Não A ou B\" (~p v q).",
+      "subject": "RLM"
+    },
+    {
+      "front": "O que representa o conectivo \"Ou... ou...\" (Disjunção exclusiva)?",
+      "back": "Só é verdade se os valores lógicos forem diferentes.",
+      "subject": "RLM"
+    },
+    {
+      "front": "Como calcular juros simples?",
+      "back": "J = C * i * t (Capital x Taxa x Tempo).",
+      "subject": "RLM"
+    },
+    {
+      "front": "Como calcular o montante em juros simples?",
+      "back": "M = C + J (Capital + Juros).",
+      "subject": "RLM"
+    },
+    {
+      "front": "O que é Hardware?",
+      "back": "A parte física do computador (placa, processador, memória).",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que é Software?",
+      "back": "A parte lógica (programas, sistemas operacionais).",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual atalho no Windows 10/11 bloqueia a tela imediatamente?",
+      "back": "Tecla Windows + L.",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual atalho abre o Explorador de Arquivos no Windows?",
+      "back": "Tecla Windows + E.",
+      "subject": "Informática"
+    },
+    {
+      "front": "Para que serve a função =SOMA() no Excel?",
+      "back": "Somar os valores de um intervalo de células selecionado.",
+      "subject": "Informática"
+    },
+    {
+      "front": "No Excel, o que indica o símbolo \"$\" em uma fórmula (ex: A1)?",
+      "back": "Referência absoluta (trava a linha e a coluna ao arrastar a fórmula).",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual a função de uma Intranet?",
+      "back": "Rede privada corporativa baseada nos protocolos da Internet (TCP/IP), restrita aos funcionários.",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que é Phishing?",
+      "back": "Técnica de fraude online que tenta \"pescar\" dados se passando por sites ou empresas confiáveis.",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que é Ransomware?",
+      "back": "Malware que criptografa os dados do usuário e exige resgate (normalmente em criptomoeda) para liberar.",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que é um arquivo PDF?",
+      "back": "Portable Document Format, formato portátil para exibir documentos independentemente de software/hardware.",
+      "subject": "Informática"
+    },
+    {
+      "front": "No Word, qual atalho seleciona todo o texto do documento?",
+      "back": "Ctrl + T.",
+      "subject": "Informática"
+    },
+    {
+      "front": "Para que serve o campo \"Cco\" no envio de e-mails?",
+      "back": "Cópia Oculta. Os destinatários ali listados recebem o e-mail sem que os outros saibam.",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual o protocolo padrão para transferência de hipertexto na web?",
+      "back": "HTTP (ou HTTPS com camada de segurança).",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual protocolo é utilizado para recebimento de e-mails?",
+      "back": "POP3 (baixa e apaga do servidor) ou IMAP (sincroniza com o servidor).",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual protocolo é usado para envio de e-mails?",
+      "back": "SMTP (Sua Mensagem Tá Partindo).",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que é Computação em Nuvem (Cloud Computing)?",
+      "back": "Fornecimento de serviços de computação (servidores, armazenamento, bancos de dados) pela Internet.",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que faz a lixeira do Windows?",
+      "back": "Armazena temporariamente arquivos excluídos do disco rígido local, permitindo restauração.",
+      "subject": "Informática"
+    },
+    {
+      "front": "Arquivos excluídos de um pen drive vão para a lixeira do Windows?",
+      "back": "Não, são excluídos permanentemente.",
+      "subject": "Informática"
+    },
+    {
+      "front": "Qual a diferença entre Salvar e Salvar Como no Word?",
+      "back": "\"Salvar\" atualiza o documento atual; \"Salvar Como\" permite salvar uma cópia com outro nome, formato ou local.",
+      "subject": "Informática"
+    },
+    {
+      "front": "O que é um Firewall?",
+      "back": "Dispositivo (hardware ou software) que filtra o tráfego de rede, protegendo contra acessos não autorizados.",
+      "subject": "Informática"
+    }
   ]
 }
 ];

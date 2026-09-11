@@ -341,6 +341,21 @@ function MainApp() {
           
           if (urlParams.get('flashcard_success') === 'true') {
             const packId = urlParams.get('packId');
+            const sessionId = urlParams.get('session_id');
+
+            if (sessionId) {
+              user.getIdToken().then(token => {
+                fetch('/api/stripe/verify-flashcard-session', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ sessionId, packId })
+                }).catch(err => console.warn("Falha ao verificar sessão stripe:", err));
+              }).catch(console.error);
+            }
+
             if (packId) {
               const uid = user.uid;
               const packsKey = `apses_owned_packs_${uid}`;

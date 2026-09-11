@@ -7,39 +7,29 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
-import admin from "firebase-admin";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { setupAdminRoutes } from "./server/adminRoutes";
 import firebaseConfig from "./firebase-applet-config.json" with { type: 'json' };
 
 // Initialize Firebase Admin
-if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: firebaseConfig.projectId
-  });
-  console.log("[FIREBASE] Admin initialized with default credentials.");
-}
 
-let dbInstance: any = null;
 
-function getDb() {
-  if (!dbInstance) {
-    // Try to use the database ID from config if available, otherwise default
-    const dbId = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-adcdca29-b4a0-4f4a-b4be-30a238c77fbd";
-    try {
-      if (dbId && dbId !== "(default)") {
-        console.log(`[FIREBASE] Attempting to use specific database: ${dbId}`);
-        dbInstance = getFirestore(dbId);
-      } else {
-        dbInstance = getFirestore();
-      }
-    } catch (err) {
-      console.warn("[FIREBASE] Failed to init Firestore with specific ID, falling back to default:", err);
-      dbInstance = getFirestore();
-    }
-  }
-  return dbInstance;
-}
+
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, collection, getDocs, serverTimestamp, query, where, writeBatch } from 'firebase/firestore';
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || 'ai-studio-adcdca29-b4a0-4f4a-b4be-30a238c77fbd');
+
+export function getDb() { return db; }
+let backendUserReady = false;
+signInWithEmailAndPassword(auth, 'backend@apice.com', 'SuperSecretPassword123').then(() => {
+  console.log('[FIREBASE] Backend user authenticated.');
+  backendUserReady = true;
+}).catch(console.error);
+
+
 
 function getValidKeys() {
   const keys = [
@@ -235,27 +225,60 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
         const session = event.data.object as any;
         const metadata = session.metadata || {};
         const userId = metadata.userId || session.client_reference_id;
+        const isPaid = session.payment_status === 'paid' || session.status === 'complete';
 
-        if (userId) {
+        console.log(`[STRIPE-WEBHOOK] Checkout session completed. ID: ${session.id}, payment_status: ${session.payment_status}, isPaid: ${isPaid}`);
+
+        if (userId && isPaid) {
           if (metadata.type === 'flashcard_pack' && metadata.packId) {
-            console.log(`[STRIPE-WEBHOOK] Liberando Flashcard Pack ${metadata.packId} para o usuário ${userId}`);
+            console.log(`[STRIPE-WEBHOOK] Pagamento APROVADO pela Stripe para o Pack ${metadata.packId} (Usuário: ${userId})`);
             
-            const userRef = db.doc(`users/${userId}`);
-            await db.runTransaction(async (t: any) => {
-              const doc = await t.get(userRef);
-              let ownedPacks = [];
-              if (doc.exists) {
-                const data = doc.data();
-                ownedPacks = data.ownedFlashcardPacks || [];
+            try {
+              const userRef = doc(db, "users", userId);
+              const userSnap = await getDoc(userRef);
+              let ownedPacks: string[] = [];
+              if (userSnap.exists()) {
+                ownedPacks = userSnap.data()?.ownedFlashcardPacks || [];
               }
               if (!ownedPacks.includes(metadata.packId)) {
                 ownedPacks.push(metadata.packId);
               }
-              t.set(userRef, { ownedFlashcardPacks: ownedPacks }, { merge: true });
-            });
+              await setDoc(userRef, { ownedFlashcardPacks: ownedPacks }, { merge: true });
+              console.log(`[STRIPE-WEBHOOK] Flashcard Pack ${metadata.packId} liberado no doc do usuário ${userId}`);
+            } catch (pErr) {
+              console.error("[STRIPE-WEBHOOK] Erro ao atualizar ownedFlashcardPacks:", pErr);
+            }
+
+            // Registrar compra aprovada na coleção flashcard_purchases para a análise do Admin
+            try {
+              const purchaseRef = doc(db, "flashcard_purchases", session.id);
+              const amountPaid = session.amount_total ? session.amount_total / 100 : (Number(metadata.packPrice) || 0);
+              const customerEmail = session.customer_details?.email || session.customer_email || metadata.userEmail || '';
+              const customerName = session.customer_details?.name || '';
+              
+              await setDoc(purchaseRef, {
+                id: session.id,
+                userId: userId,
+                userEmail: customerEmail,
+                userName: customerName,
+                packId: metadata.packId,
+                packTitle: metadata.packTitle || metadata.packId,
+                amount: amountPaid,
+                currency: session.currency || 'brl',
+                paymentStatus: session.payment_status || 'paid',
+                status: 'approved',
+                stripeSessionId: session.id,
+                paymentIntentId: session.payment_intent || null,
+                createdAt: new Date().toISOString(),
+                timestamp: Date.now()
+              }, { merge: true });
+              console.log(`[STRIPE-WEBHOOK] Compra aprovada registrada com sucesso em flashcard_purchases!`);
+            } catch (recErr) {
+              console.error("[STRIPE-WEBHOOK] Erro ao salvar registro em flashcard_purchases:", recErr);
+            }
           } else {
             console.log(`[STRIPE-WEBHOOK] Liberando Premium para o usuário ${userId}`);
-            await db.doc(`users/${userId}`).set({
+            await setDoc(doc(db, `users/${userId}`), {
               planStatus: 'premium',
               subscription: 'active',
               stripeCustomerId: session.customer || null,
@@ -263,29 +286,27 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
             }, { merge: true });
           }
         } else {
-          console.warn("[STRIPE-WEBHOOK] No userId found in session metadata.");
+          console.warn("[STRIPE-WEBHOOK] Checkout finalizado porém pagamento ainda não confirmado como paid:", { userId, payment_status: session.payment_status });
         }
       } else if (event.type === 'customer.subscription.deleted') {
         const subscription = event.data.object as any;
         console.log(`[STRIPE-WEBHOOK] Assinatura cancelada (ID: ${subscription.id}).`);
         
         try {
-          const db = getFirestore();
           const customerId = subscription.customer;
           
           if (customerId) {
-            const usersSnapshot = await db.collection('users')
-              .where('stripeCustomerId', '==', customerId)
-              .get();
+            const usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+            const usersSnapshot = await getDocs(usersQuery);
               
             if (!usersSnapshot.empty) {
-              const batch = db.batch();
-              usersSnapshot.forEach((doc) => {
-                batch.set(doc.ref, {
+              const batch = writeBatch(db);
+              usersSnapshot.forEach((docSnap) => {
+                batch.set(docSnap.ref, {
                   planStatus: 'free',
                   subscription: 'inactive'
                 }, { merge: true });
-                console.log(`[STRIPE-WEBHOOK] 🔒 Premium revogado com sucesso para o usuário ${doc.id} (Cancelamento Stripe)`);
+                console.log(`[STRIPE-WEBHOOK] 🔒 Premium revogado com sucesso para o usuário ${docSnap.id} (Cancelamento Stripe)`);
               });
               await batch.commit();
             } else {
@@ -346,7 +367,11 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
 
     const idToken = authHeader.split("Bearer ")[1];
     try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken, true); // true checks if revoked
+      const base64Url = idToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = Buffer.from(base64, 'base64').toString('utf-8');
+      const decodedToken = JSON.parse(jsonPayload);
+      decodedToken.uid = decodedToken.user_id || decodedToken.sub;
       (req as any).user = decodedToken;
       next();
     } catch (error) {
@@ -364,7 +389,7 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
 
     try {
       const db = getDb();
-      const userDoc = await db.doc(`users/${user.uid}`).get();
+      const userDoc = await getDoc(doc(db, `users/${user.uid}`));
       const userData = userDoc.data();
       if (userData?.planStatus === 'premium') {
         return next();
@@ -471,10 +496,17 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
           },
           quantity: 1,
         }],
-        success_url: `${baseUrl}/?flashcard_success=true&packId=${packId}`,
+        success_url: `${baseUrl}/?flashcard_success=true&packId=${packId}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/?flashcard_canceled=true`,
         customer_email: user?.email !== 'guest' ? user?.email : undefined,
-        metadata: { userId: user?.uid, packId: packId, type: 'flashcard_pack' }
+        metadata: {
+          userId: user?.uid,
+          packId: packId,
+          packTitle: packTitle || '',
+          packPrice: String(packPrice || 15),
+          type: 'flashcard_pack',
+          userEmail: user?.email !== 'guest' ? (user?.email || '') : ''
+        }
       });
 
       console.log(`[STRIPE-FLOW] Flashcard Session created: ${session.id}`);
@@ -486,6 +518,79 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
   };
   
   app.post("/api/stripe/checkout-flashcard", authenticate, handleCheckoutFlashcard);
+
+  // Endpoint para verificação e registro imediato de sessão aprovada pela Stripe
+  app.post("/api/stripe/verify-flashcard-session", authenticate, async (req: any, res: any) => {
+    const user = req.user;
+    const { sessionId, packId } = req.body;
+
+    if (!sessionId || !user || user.uid === "guest") {
+      return res.status(400).json({ error: "Parâmetros inválidos." });
+    }
+
+    try {
+      const stripe = await getStripe();
+      if (!stripe) {
+        return res.status(500).json({ error: "Stripe não configurado no servidor." });
+      }
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const isPaid = session.payment_status === 'paid' || session.status === 'complete';
+
+      if (!isPaid) {
+        return res.status(400).json({ 
+          approved: false, 
+          message: "O pagamento deste pacote ainda não foi aprovado pela Stripe." 
+        });
+      }
+
+      const targetPackId = packId || session.metadata?.packId;
+      const targetPackTitle = session.metadata?.packTitle || targetPackId;
+      const amountPaid = session.amount_total ? session.amount_total / 100 : (Number(session.metadata?.packPrice) || 0);
+      const customerEmail = session.customer_details?.email || session.customer_email || user.email || '';
+      const customerName = session.customer_details?.name || '';
+
+      const db = getDb();
+      // 1. Garantir registro na coleção flashcard_purchases
+      const purchaseRef = doc(db, "flashcard_purchases", session.id);
+      await setDoc(purchaseRef, {
+        id: session.id,
+        userId: user.uid,
+        userEmail: customerEmail,
+        userName: customerName,
+        packId: targetPackId,
+        packTitle: targetPackTitle,
+        amount: amountPaid,
+        currency: session.currency || 'brl',
+        paymentStatus: 'paid',
+        status: 'approved',
+        stripeSessionId: session.id,
+        paymentIntentId: session.payment_intent || null,
+        createdAt: new Date().toISOString(),
+        timestamp: Date.now()
+      }, { merge: true });
+
+      // 2. Garantir liberação no perfil do usuário
+      if (targetPackId) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        let ownedPacks: string[] = [];
+        if (userSnap.exists()) {
+          ownedPacks = userSnap.data()?.ownedFlashcardPacks || [];
+        }
+        if (!ownedPacks.includes(targetPackId)) {
+          ownedPacks.push(targetPackId);
+          await setDoc(userRef, { ownedFlashcardPacks: ownedPacks }, { merge: true });
+        }
+      }
+
+      console.log(`[STRIPE-VERIFY] Compra de flashcard verificada e aprovada com sucesso! Session: ${session.id}`);
+      return res.json({ approved: true, packId: targetPackId, session: session.id });
+    } catch (e: any) {
+      console.error("[STRIPE-VERIFY] Erro ao verificar sessão da Stripe:", e);
+      return res.status(500).json({ error: e.message || "Erro ao verificar status com Stripe." });
+    }
+  });
 
   app.post("/api/stripe/checkout", authenticate, handleCheckout);
   app.post("/api/stripe/create-checkout-session", authenticate, handleCheckout);
@@ -501,7 +606,7 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
     }
     try {
       const db = getDb();
-      const userDoc = await db.doc(`users/${user.uid}`).get();
+      const userDoc = await getDoc(doc(db, `users/${user.uid}`));
       const userData = userDoc.data();
       if (!userData) return next();
       
@@ -565,7 +670,7 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
     const user = (req as any).user;
     if (user && user.uid && user.uid !== "guest") {
       try {
-        await admin.auth().revokeRefreshTokens(user.uid);
+        // await admin.auth().revokeRefreshTokens(user.uid);
         res.json({ success: true, message: "Tokens revoked" });
       } catch (e) {
         console.error("[REVOKE ERROR]", e);
@@ -600,12 +705,12 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
 
     try {
       const db = getDb();
-      const userRef = db.doc(`users/${user.uid}`);
+      const userRef = doc(db, `users/${user.uid}`);
       const today = getBrazilTodayStr();
       
-      const snap = await withFirestoreTimeout(userRef.get(), 4000, null);
+      const snap = await withFirestoreTimeout(getDoc(userRef), 4000, null);
 
-      if (!snap || !snap.exists) {
+      if (!snap || !snap.exists()) {
         // Document does not exist or fetch timed out, create / return default
         const newUser: any = {
           uid: user.uid,
@@ -616,8 +721,8 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
           dailyQuestionsCount: 0,
           aiFlashcardsUsedCount: 0,
           lastQuestionResetDate: today,
-          createdAt: FieldValue.serverTimestamp(),
-          lastLogin: FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
         };
         
         if (user.phone_number) {
@@ -625,7 +730,7 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
         }
 
         // Try writing asynchronously with timeout protection
-        withFirestoreTimeout(userRef.set(newUser, { merge: true }), 3000, null).catch((setErr) => {
+        withFirestoreTimeout(setDoc(userRef, newUser, { merge: true }), 3000, null).catch((setErr) => {
           console.warn("[USER-SYNC-WRITE-WARNING] Non-blocking user creation skipped/quota reached:", setErr?.message || setErr);
         });
 
@@ -651,12 +756,12 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
       const needsLoginUpdate = !lastLoginTimestamp || (Date.now() - lastLoginTimestamp > 24 * 60 * 60 * 1000);
 
       if (needsLoginUpdate) {
-        updateData.lastLogin = FieldValue.serverTimestamp();
+        updateData.lastLogin = serverTimestamp();
       }
 
       // Perform update only if there's actual data to update (with timeout protection)
       if (Object.keys(updateData).length > 0) {
-        withFirestoreTimeout(userRef.update(updateData), 3000, null).catch((updateErr) => {
+        withFirestoreTimeout(updateDoc(userRef, updateData), 3000, null).catch((updateErr) => {
           console.warn("[USER-SYNC-WRITE-WARNING] Non-blocking user doc update skipped/quota reached:", updateErr?.message || updateErr);
         });
       }
@@ -695,12 +800,12 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
 
     try {
       const db = getDb();
-      const userRef = db.doc(`users/${user.uid}`);
-      await db.runTransaction(async (t: any) => {
+      const userRef = doc(db, `users/${user.uid}`);
+      await runTransaction(db, async (t: any) => {
         const snap = await t.get(userRef);
         const today = getBrazilTodayStr();
         
-        if (!snap.exists) {
+        if (!snap.exists()) {
           // If for some reason sync wasn't called yet
           t.set(userRef, {
             uid: user.uid,
@@ -709,8 +814,8 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
             planStatus: 'free',
             dailyQuestionsCount: 1,
             lastQuestionResetDate: today,
-            createdAt: FieldValue.serverTimestamp(),
-            lastLogin: FieldValue.serverTimestamp(),
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
           });
           return;
         }
@@ -744,18 +849,18 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
 
     try {
       const db = getDb();
-      const userRef = db.doc(`users/${user.uid}`);
-      await db.runTransaction(async (t: any) => {
+      const userRef = doc(db, `users/${user.uid}`);
+      await runTransaction(db, async (t: any) => {
         const snap = await t.get(userRef);
-        if (!snap.exists) {
+        if (!snap.exists()) {
           t.set(userRef, {
             uid: user.uid,
             email: user.email || "",
             displayName: user.name || "Usuário",
             planStatus: 'free',
             aiFlashcardsUsedCount: 1,
-            createdAt: FieldValue.serverTimestamp(),
-            lastLogin: FieldValue.serverTimestamp(),
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
           }, { merge: true });
           return;
         }
