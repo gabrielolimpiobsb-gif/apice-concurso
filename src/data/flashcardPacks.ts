@@ -1,5 +1,767 @@
 export const AVAILABLE_PACKS = [
+
   {
+    id: "pack_pp_pe",
+    title: "Pacote Polícia Penal PE (PP-PE)",
+    description: "Pacote focado no edital do CEBRASPE para a Polícia Penal de Pernambuco. Abrange as principais disciplinas com questões de alto nível focadas em Língua Portuguesa (Sintaxe), RLM, Informática, Direito Constitucional, Administrativo, Penal, Execução Penal e LEP.",
+    price: 6.79,
+    stripePriceId: "price_1U7hPaJHOxkXcOfJirIQMaKE",
+    coverColor: "from-[#ef4444] to-[#991b1b]",
+    imageUrl: "/pacote_pppe.png",
+    cardsCount: 150,
+    flashcards: [
+    {
+        front: "O que caracteriza um sujeito indeterminado?",
+        back: "É aquele que não se pode ou não se deseja identificar na oração.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função sintática da palavra \"casa\" em \"Vende-se casa\"?",
+        back: "Sujeito simples e paciente.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função do \"se\" na oração \"Vende-se casa\"?",
+        back: "Partícula apassivadora (ou pronome apassivador).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual o sujeito de \"Precisa-se de novos agentes\"?",
+        back: "Sujeito indeterminado.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função do \"se\" na oração \"Precisa-se de novos agentes\"?",
+        back: "Índice de indeterminação do sujeito.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que é um predicado verbal?",
+        back: "Aquele cujo núcleo é um verbo de ação (nocional).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que é um predicado nominal?",
+        back: "Aquele cujo núcleo é um nome (predicativo), ligado ao sujeito por um verbo de ligação.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que é um predicado verbo-nominal?",
+        back: "Aquele que possui dois núcleos: um verbo de ação e um predicativo.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que é um objeto direto preposicionado?",
+        back: "Complemento de verbo transitivo direto que, por estilo, clareza ou ênfase, vem precedido de preposição.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a diferença fundamental entre Adjunto Adnominal e Complemento Nominal?",
+        back: "O adjunto tem sentido ativo/posse; o complemento tem sentido passivo e sofre a ação do nome.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O complemento nominal completa o sentido de quais classes gramaticais?",
+        back: "Substantivos abstratos, adjetivos e advérbios (sempre com preposição).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função sintática do termo que indica o motivo da ação verbal?",
+        back: "Adjunto adverbial de causa.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que expressa um adjunto adverbial de concessão?",
+        back: "Uma quebra de expectativa ou oposição que não impede a ação principal de acontecer.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função sintática do aposto explicativo?",
+        back: "Explicar ou esclarecer um termo antecedente, vindo geralmente isolado por vírgulas.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função do vocativo e sua relação com a oração?",
+        back: "Serve para chamamento ou invocação, e não possui nenhuma subordinação sintática com a oração.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função de uma oração subordinada substantiva subjetiva?",
+        back: "Exercer a função sintática de sujeito da oração principal.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a função de uma oração subordinada substantiva objetiva direta?",
+        back: "Exercer a função sintática de objeto direto do verbo da oração principal.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que caracteriza uma oração subordinada adjetiva restritiva?",
+        back: "Ela restringe/limita o sentido do termo anterior e não vem separada por vírgula.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "O que caracteriza uma oração subordinada adjetiva explicativa?",
+        back: "Ela generaliza ou explica o termo anterior e vem obrigatoriamente isolada por vírgulas.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual classe de palavra introduz uma oração subordinada substantiva?",
+        back: "Conjunção integrante (como \"que\" e \"se\").",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual classe de palavra introduz uma oração subordinada adjetiva?",
+        back: "Pronome relativo (que, qual, cujo, onde).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Como corrigir a concordância de \"Fazem três anos que estudo\"?",
+        back: "\"Faz três anos que estudo\" (o verbo fazer indicando tempo decorrido é impessoal).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Como corrigir a concordância de \"Houveram grandes problemas no presídio\"?",
+        back: "\"Houve grandes problemas\" (verbo haver no sentido de existir é impessoal e fica no singular).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a transitividade e a regência do verbo \"assistir\" no sentido de presenciar?",
+        back: "Verbo transitivo indireto, exige a preposição \"a\".",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a transitividade e a regência do verbo \"visar\" no sentido de objetivar?",
+        back: "Verbo transitivo indireto, exige a preposição \"a\".",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Qual a transitividade do verbo \"aspirar\" no sentido de respirar/sorver?",
+        back: "Verbo transitivo direto (não exige preposição).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Ocorre crase antes de pronome de tratamento (como Vossa Excelência)?",
+        back: "Em regra geral, não ocorre crase.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "A crase é facultativa ou obrigatória na locução conjuntiva \"à medida que\"?",
+        back: "É obrigatória (locução feminina).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Quais termos essenciais da oração não podem ser separados por vírgula?",
+        back: "Sujeito e predicado (verbo).",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Pode-se utilizar vírgula para separar o verbo do seu objeto imediato?",
+        back: "Não, essa pontuação é considerada erro sintático.",
+        subject: "Língua Portuguesa"
+    },
+    {
+        front: "Como se faz a negação de uma proposição ligada pelo \"E\" (^)?",
+        back: "Nega-se a primeira, nega-se a segunda e troca-se o \"E\" pelo \"OU\" (Lei de De Morgan).",
+        subject: "RLM"
+    },
+    {
+        front: "Como se faz a negação de uma proposição ligada pelo \"OU\" (v)?",
+        back: "Nega-se a primeira, nega-se a segunda e troca-se o \"OU\" pelo \"E\".",
+        subject: "RLM"
+    },
+    {
+        front: "Como se nega a condicional \"Se A, então B\" (P -> Q)?",
+        back: "Mantém a primeira E nega a segunda (A e ~B).",
+        subject: "RLM"
+    },
+    {
+        front: "Qual a equivalência lógica da condicional pela regra da Contrapositiva?",
+        back: "Inverte os termos e nega ambos: \"Se não B, então não A\" (~Q -> ~P).",
+        subject: "RLM"
+    },
+    {
+        front: "Qual a equivalência da condicional usando o conectivo \"OU\" (Regra do Neymar)?",
+        back: "Nega a primeira OU mantém a segunda (~P v Q).",
+        subject: "RLM"
+    },
+    {
+        front: "O que é uma Tautologia?",
+        back: "É uma proposição composta cujo resultado final é sempre verdadeiro, independente das partes.",
+        subject: "RLM"
+    },
+    {
+        front: "O que é uma Contradição na lógica proposicional?",
+        back: "É uma proposição composta cujo resultado final é sempre falso.",
+        subject: "RLM"
+    },
+    {
+        front: "O que é uma Contingência?",
+        back: "É a proposição que não é Tautologia nem Contradição (o resultado pode ser V ou F).",
+        subject: "RLM"
+    },
+    {
+        front: "Na tabela-verdade do conectivo Condicional, qual o único caso que resulta em Falso?",
+        back: "Quando a primeira é Verdadeira e a segunda é Falsa (Vera Fischer: V -> F = F).",
+        subject: "RLM"
+    },
+    {
+        front: "Na tabela-verdade da Conjunção (\"E\"), quando o resultado é verdadeiro?",
+        back: "Apenas quando todas as proposições componentes forem verdadeiras.",
+        subject: "RLM"
+    },
+    {
+        front: "Na tabela-verdade da Disjunção Simples (\"OU\"), quando o resultado é falso?",
+        back: "Apenas quando todas as proposições componentes forem falsas.",
+        subject: "RLM"
+    },
+    {
+        front: "Na tabela-verdade da Disjunção Exclusiva (\"Ou... ou...\"), quando o resultado é verdadeiro?",
+        back: "Quando os valores lógicos das proposições forem diferentes (um V e outro F).",
+        subject: "RLM"
+    },
+    {
+        front: "Na Bicondicional (\"Se e somente se\"), quando o resultado é verdadeiro?",
+        back: "Quando os valores lógicos forem iguais (V com V, ou F com F).",
+        subject: "RLM"
+    },
+    {
+        front: "Qual é a negação lógica do quantificador \"Todo\"?",
+        back: "\"Algum não é\", \"Pelo menos um não é\" ou \"Existe um que não é\".",
+        subject: "RLM"
+    },
+    {
+        front: "Qual é a negação lógica do quantificador \"Nenhum\"?",
+        back: "\"Algum é\", \"Pelo menos um é\" ou \"Existe um que é\".",
+        subject: "RLM"
+    },
+    {
+        front: "O que caracteriza o ataque de Phishing?",
+        back: "Uma engenharia social que se passa por fonte confiável para \"pescar\" senhas e dados bancários da vítima.",
+        subject: "Informática"
+    },
+    {
+        front: "O que é um Ransomware?",
+        back: "Malware que criptografa ou sequestra o acesso a dados, cobrando um resgate (normalmente em bitcoin) para liberá-los.",
+        subject: "Informática"
+    },
+    {
+        front: "O que define um Cavalo de Troia (Trojan)?",
+        back: "Um programa que parece útil e legítimo, mas esconde ações maliciosas em segundo plano.",
+        subject: "Informática"
+    },
+    {
+        front: "O que significa a sigla IaaS em Computação em Nuvem?",
+        back: "Infraestrutura como Serviço (aluguel de servidores virtuais e armazenamento).",
+        subject: "Informática"
+    },
+    {
+        front: "O que significa a sigla SaaS em Computação em Nuvem?",
+        back: "Software como Serviço (aplicativos acessados via web, como o Google Docs).",
+        subject: "Informática"
+    },
+    {
+        front: "Quais atalhos executam a ação de Copiar e Colar tanto no Windows quanto no Linux?",
+        back: "Ctrl+C e Ctrl+V.",
+        subject: "Informática"
+    },
+    {
+        front: "Qual a função principal da Lixeira no Windows?",
+        back: "Armazenar temporariamente arquivos deletados do disco rígido local, possibilitando restauração.",
+        subject: "Informática"
+    },
+    {
+        front: "O que é uma Intranet?",
+        back: "Uma rede privada corporativa, restrita aos funcionários, que utiliza os mesmos protocolos da Internet.",
+        subject: "Informática"
+    },
+    {
+        front: "O que é uma Extranet?",
+        back: "É a parte de uma Intranet que pode ser acessada externamente com segurança, geralmente por parceiros ou fornecedores.",
+        subject: "Informática"
+    },
+    {
+        front: "Qual a diferença entre os protocolos HTTP e HTTPS?",
+        back: "O HTTP não tem criptografia; o HTTPS possui camada extra de segurança (SSL/TLS) para tráfego de dados sensíveis.",
+        subject: "Informática"
+    },
+    {
+        front: "Qual o protocolo padrão utilizado para o envio de e-mails?",
+        back: "SMTP.",
+        subject: "Informática"
+    },
+    {
+        front: "Qual protocolo de recebimento baixa as mensagens e costuma apagá-las do servidor?",
+        back: "POP3 (ou POP).",
+        subject: "Informática"
+    },
+    {
+        front: "Qual protocolo de recebimento sincroniza as mensagens mantendo-as armazenadas no servidor?",
+        back: "IMAP.",
+        subject: "Informática"
+    },
+    {
+        front: "O que é e para que serve um Firewall?",
+        back: "Pode ser hardware ou software; atua filtrando o tráfego da rede para bloquear acessos não autorizados.",
+        subject: "Informática"
+    },
+    {
+        front: "Um arquivo deletado de um Pendrive vai para a lixeira do Windows?",
+        back: "Não, ele é apagado permanentemente, sem passar pela lixeira.",
+        subject: "Informática"
+    },
+    {
+        front: "Segundo a CF/88, a lei penal não retroagirá, salvo para quê?",
+        back: "Para beneficiar o réu.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "O crime de racismo sujeita-se a quais penalidades constitucionais diretas?",
+        back: "É inafiançável e imprescritível, sujeito à pena de reclusão.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Os crimes de tortura, tráfico de entorpecentes, terrorismo e hediondos são classificados como?",
+        back: "Inafiançáveis e insuscetíveis de graça ou anistia.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "A ação de grupos armados contra a ordem constitucional é um crime...",
+        back: "Inafiançável e imprescritível.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Qual o remédio constitucional para proteger o direito de liberdade de locomoção?",
+        back: "Habeas Corpus.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Qual o remédio constitucional para garantir o conhecimento ou retificação de informações pessoais?",
+        back: "Habeas Data.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Qual remédio protege o direito líquido e certo não amparado por HC ou HD?",
+        back: "Mandado de Segurança.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "O artigo 144 da Constituição Federal inclui a Polícia Penal no rol de segurança pública?",
+        back: "Sim, as Polícias Penais federal, estaduais e distrital integram o rol (acrescentadas pela EC 104/2019).",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "As polícias penais estaduais subordinam-se diretamente a quem?",
+        back: "Ao Governador do Estado.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Qual a competência primordial das Polícias Penais segundo a CF/88?",
+        back: "A segurança dos estabelecimentos penais.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Para que serve o Mandado de Injunção?",
+        back: "Para suprir a falta de norma regulamentadora que torne inviável o exercício dos direitos e liberdades constitucionais.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "A CF/88 permite a pena de morte no Brasil?",
+        back: "Como regra, não, exceto em caso de guerra declarada.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "A pena de banimento é admitida no Brasil?",
+        back: "Não. É expressamente vedada pela Constituição.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "A casa é asilo inviolável. Durante a noite, só se pode entrar sem consentimento em quais hipóteses?",
+        back: "Flagrante delito, desastre ou para prestar socorro.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Uma ordem judicial de busca domiciliar pode ser cumprida à noite?",
+        back: "Não, somente durante o dia.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Todos têm direito a receber informações dos órgãos públicos? Há exceção?",
+        back: "Sim. A exceção são as informações cujo sigilo seja imprescindível à segurança da sociedade e do Estado.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "O preso possui o direito constitucional à identificação dos responsáveis por sua prisão ou interrogatório?",
+        back: "Sim, é um direito garantido.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "É permitida a extradição de brasileiro nato?",
+        back: "Nunca.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "O brasileiro naturalizado pode ser extraditado?",
+        back: "Apenas em caso de crime comum antes da naturalização ou tráfico ilícito de entorpecentes a qualquer tempo.",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Quais remédios constitucionais são gratuitos?",
+        back: "Habeas corpus e habeas data (e os atos necessários ao exercício da cidadania).",
+        subject: "Direito Constitucional"
+    },
+    {
+        front: "Quais são os cinco princípios constitucionais expressos da Administração Pública (LIMPE)?",
+        back: "Legalidade, Impessoalidade, Moralidade, Publicidade e Eficiência.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "O que é o Poder de Polícia administrativa?",
+        back: "É a prerrogativa do Estado de restringir ou condicionar liberdades e propriedades individuais em prol do interesse coletivo.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Qual poder permite à administração organizar sua estrutura, dar ordens e fiscalizar subordinados?",
+        back: "Poder Hierárquico.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "O que é o Poder Disciplinar?",
+        back: "É o poder de apurar infrações e aplicar punições aos servidores públicos e particulares com vínculo com a Administração.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Quais os quatro atributos principais do Ato Administrativo (PATI)?",
+        back: "Presunção de Legitimidade, Autoexecutoriedade, Tipicidade e Imperatividade.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Quando deve ocorrer a anulação de um ato administrativo e qual seu efeito?",
+        back: "Quando o ato for ilegal, possuindo efeito retroativo (ex tunc).",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Quando ocorre a revogação de um ato administrativo e qual seu efeito?",
+        back: "Quando o ato for inoportuno ou inconveniente, mas legal, sem retroagir (efeito ex nunc).",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Quais entes compõem a Administração Pública Direta?",
+        back: "União, Estados, Distrito Federal e Municípios.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Quais entidades formam a Administração Pública Indireta?",
+        back: "Autarquias, Fundações Públicas, Empresas Públicas e Sociedades de Economia Mista.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Uma Autarquia possui personalidade jurídica de direito público ou privado?",
+        back: "Personalidade jurídica de Direito Público.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Uma Sociedade de Economia Mista é regida predominantemente por qual regime jurídico?",
+        back: "Regime de Direito Privado.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Como é a responsabilidade civil do Estado pelos atos comissivos de seus agentes?",
+        back: "Responsabilidade Objetiva (independe de prova de dolo ou culpa).",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Qual teoria baliza a responsabilidade civil objetiva do Estado na CF/88?",
+        back: "Teoria do Risco Administrativo.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Se o Estado indenizar o particular, a responsabilidade do agente público em ação de regresso será...",
+        back: "Subjetiva (depende de comprovação de dolo ou culpa do servidor).",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "A nomeação de parentes (nepotismo) viola primordialmente quais princípios da Administração?",
+        back: "Impessoalidade e Moralidade.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Pode haver delegação de competência para um órgão que não seja hierarquicamente subordinado?",
+        back: "Sim, desde que para o desempenho de funções específicas, se não houver impedimento legal.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Quais matérias NUNCA podem ser objeto de delegação administrativa (CE NO RE)?",
+        back: "Competência Exclusiva, edição de atos NOrmativos e decisão de REcursos administrativos.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "Condenação por improbidade administrativa baseada em lesão ao erário exige dolo ou culpa?",
+        back: "Apenas dolo (a nova lei eliminou a modalidade culposa).",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "O que são as Cláusulas Exorbitantes nos contratos administrativos?",
+        back: "São prerrogativas que colocam a Administração em posição de superioridade técnica e jurídica perante o contratado.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "O que reza o Princípio da Autotutela?",
+        back: "A Administração pode anular seus próprios atos ilegais e revogar atos inoportunos sem precisar recorrer ao Judiciário.",
+        subject: "Direito Administrativo"
+    },
+    {
+        front: "O que preconiza o Princípio da Legalidade estrita no Direito Penal?",
+        back: "Não há crime sem lei anterior que o defina, nem pena sem prévia cominação legal.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual a regra para o conflito da lei penal no tempo?",
+        back: "A lei aplicável é a da época dos fatos (tempus regit actum), salvo lei posterior mais benéfica que retroage.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual teoria o Código Penal adota para definir o TEMPO do crime?",
+        back: "Teoria da Atividade (momento da ação ou omissão).",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual teoria o Código Penal adota para definir o LUGAR do crime?",
+        back: "Teoria da Ubiquidade (lugar da ação/omissão e lugar da produção do resultado).",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que o Erro de Tipo Essencial Inevitável (escusável) exclui?",
+        back: "Exclui o dolo e a culpa (o fato torna-se atípico).",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que o Erro de Tipo Essencial Evitável (inescusável) exclui?",
+        back: "Exclui o dolo, mas permite a punição a título de culpa, se houver previsão em lei.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Quais são as quatro excludentes de ilicitude no Brasil?",
+        back: "Estado de necessidade, legítima defesa, estrito cumprimento do dever legal e exercício regular de direito.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que caracteriza a Legítima Defesa?",
+        back: "Repelir injusta agressão, atual ou iminente, a direito seu ou de outrem, usando moderadamente os meios necessários.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é Estado de Necessidade?",
+        back: "Praticar fato para salvar de perigo atual (não provocado e não evitável de outro modo) direito próprio ou alheio.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "A doença mental que tira a capacidade de entendimento do réu exclui qual elemento do crime?",
+        back: "A culpabilidade (torna o agente inimputável).",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Menores de 18 anos são penalmente o quê?",
+        back: "Inimputáveis, submetendo-se à legislação especial (ECA).",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Quando ocorre um crime consumado?",
+        back: "Quando nele se reúnem todos os elementos de sua definição legal.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é a Tentativa de crime?",
+        back: "Quando, iniciada a execução, o crime não se consuma por circunstâncias alheias à vontade do agente.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é a Desistência Voluntária?",
+        back: "O agente voluntariamente desiste de prosseguir na execução do crime; responde apenas pelos atos já praticados.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é o Arrependimento Eficaz?",
+        back: "O agente esgota a execução, mas age a tempo e impede que o resultado se produza; responde só pelos atos praticados.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Quais os requisitos para o Arrependimento Posterior (que diminui a pena)?",
+        back: "Crime sem violência ou grave ameaça e reparação do dano até o recebimento da denúncia ou queixa.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que torna um Crime Impossível?",
+        back: "A ineficácia absoluta do meio empregado ou a impropriedade absoluta do objeto, impossibilitando a consumação.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual é o crime de Peculato?",
+        back: "Apropriação ou desvio, por funcionário público, de dinheiro, valor ou bem móvel em proveito próprio ou alheio, em razão do cargo.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual a diferença básica entre Corrupção Passiva e Concussão?",
+        back: "Na corrupção passiva o agente \"solicita ou recebe\"; na concussão o agente \"exige\" a vantagem indevida.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é o crime de Prevaricação?",
+        back: "Retardar ou deixar de praticar indevidamente ato de ofício para satisfazer interesse ou sentimento pessoal.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é a Condescendência Criminosa?",
+        back: "Deixar o funcionário, por indulgência, de responsabilizar subordinado que cometeu infração, ou de levar ao superior.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Comete crime o funcionário público que abandona o cargo injustificadamente?",
+        back: "Sim, é o crime de Abandono de Função.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "O que é o crime de Resistência?",
+        back: "Opor-se à execução de ato legal, mediante violência ou ameaça a funcionário competente.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Desacatar funcionário público no exercício da função ou em razão dela configura qual crime?",
+        back: "Desacato.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual a pena aplicável ao preso que foge sem emprego de violência?",
+        back: "A fuga sem violência não é crime tipificado de evasão; porém, gera falta grave na Execução Penal.",
+        subject: "Direito Penal"
+    },
+    {
+        front: "Qual o principal objetivo da Lei de Execução Penal (LEP)?",
+        back: "Efetivar as disposições da sentença e proporcionar condições para a harmônica reintegração social do condenado e internado.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Quais são os três regimes de cumprimento de pena previstos no Brasil?",
+        back: "Fechado, Semiaberto e Aberto.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Em qual tipo de estabelecimento deve ser cumprido o regime fechado?",
+        back: "Penitenciária de segurança máxima ou média.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Onde o condenado deve cumprir pena em regime semiaberto?",
+        back: "Colônia Agrícola, Industrial ou estabelecimento similar.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Onde o condenado cumpre pena em regime aberto?",
+        back: "Casa do Albergado ou estabelecimento adequado.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "O trabalho é obrigatório para o preso definitivo?",
+        back: "Sim, constitui dever social e condição de dignidade humana, tendo obrigatoriedade na LEP.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "O preso provisório é obrigado a trabalhar?",
+        back: "Não, o trabalho não é obrigatório para o preso provisório (se houver, apenas internamente).",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Como funciona a proporção para a remição da pena pelo trabalho?",
+        back: "A cada 3 dias de trabalho abate-se 1 dia de pena.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Como funciona a proporção para a remição da pena pelo estudo?",
+        back: "A cada 12 horas de frequência escolar (divididas em no mínimo 3 dias), abate-se 1 dia de pena.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "O que ocorre com os dias remidos se o preso cometer falta grave?",
+        back: "O Juiz poderá revogar até 1/3 (um terço) do tempo remido, recomeçando a contagem a partir da falta.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Quem tem competência para aplicar a sanção correspondente a falta grave na execução penal?",
+        back: "Apenas o Juiz da Execução Penal (não o diretor do presídio).",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Quem tem competência para aplicar sanções de advertência ou isolamento interno?",
+        back: "O Diretor do estabelecimento prisional.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Qual o limite de tempo estipulado na LEP para o isolamento do preso em cela própria?",
+        back: "O isolamento, ou inclusão em cela escura (vedada a cela escura), tem limite legal de 30 dias.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Qual a duração máxima inicial estipulada para a inclusão do preso no Regime Disciplinar Diferenciado (RDD)?",
+        back: "Até 2 anos, sem prejuízo de repetição por nova falta.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "No RDD, quantas horas diárias o preso tem de banho de sol?",
+        back: "2 horas diárias de banho de sol, em grupos de até 4 presos que não pertençam à mesma facção.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "O benefício de saída temporária pode ser concedido a presos de qual regime?",
+        back: "Exclusivamente aos que cumprem pena em regime semiaberto.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "A permissão de saída para funerais ou doença grave aplica-se a quais presos?",
+        back: "Presos provisórios e condenados nos regimes fechado e semiaberto (sempre mediante escolta).",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Qual autoridade autoriza a saída temporária?",
+        back: "O Juiz da Execução.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Qual autoridade autoriza a permissão de saída (falecimentos/doenças)?",
+        back: "O Diretor do estabelecimento prisional.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Onde atua o Conselho da Comunidade, segundo a LEP?",
+        back: "Em cada comarca que possua órgão de execução penal.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "A Defensoria Pública figura como órgão da Execução Penal?",
+        back: "Sim, está no rol dos órgãos da Execução Penal estabelecidos na LEP.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Mulheres e presos maiores de 60 anos devem ser alocados em presídios comuns com os demais?",
+        back: "Não, eles têm direito a recolhimento em estabelecimentos próprios e adequados à sua condição pessoal.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "Participar de tentativa de fuga ou de motim é considerado qual tipo de falta na LEP?",
+        back: "Falta Disciplinar de natureza Grave.",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "A assistência educacional no sistema prisional compreende quais instruções?",
+        back: "A instrução escolar e o ensino profissionalizante (sendo o ensino fundamental obrigatório na prisão).",
+        subject: "Execução Penal e LEP"
+    },
+    {
+        front: "A assistência religiosa na prisão possui caráter obrigatório para o preso?",
+        back: "A oferta por parte do Estado é obrigatória, mas a participação e o engajamento do preso são estritamente facultativos.",
+        subject: "Execução Penal e LEP"
+    }
+]
+  },  {
     id: "pack_prf_agente",
     title: "Pacote PRF - Agente de Polícia",
     description: "Pacote completo com foco no edital da PRF. Abrange Legislação de Trânsito, Direito (Constitucional, Administrativo, Penal), Física, RLM e mais.",

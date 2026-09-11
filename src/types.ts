@@ -59,6 +59,9 @@ export interface Question {
   alternatives: Alternative[];
   explanation?: string;
   createdAt: number;
+  isInedita?: boolean;
+  isApiceOriginal?: boolean;
+  sourcePackId?: string;
 }
 
 export interface Performance {

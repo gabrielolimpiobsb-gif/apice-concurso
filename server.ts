@@ -634,17 +634,21 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
     try {
       const { model, contents, config } = req.body;
       if (!contents || !Array.isArray(contents)) return res.status(400).json({ error: "Invalid format" });
+      const targetModel = model || "gemini-3.8-flash";
       const response = await callGeminiWithRetry(async (ai) => {
         return await ai.models.generateContent({
-          model: model || "gemini-3-flash-preview",
+          model: targetModel,
           contents,
           config
         });
       });
       res.json({ text: response.text });
     } catch (error: any) {
-      console.error("[GEMINI-ERROR]", error);
-      res.status(500).json({ error: error.message });
+      console.warn("[GEMINI-ERROR]", error?.message || error);
+      const isQuota = String(error?.message || "").includes("429") || 
+                      String(error?.message || "").includes("esgotaram a cota") || 
+                      String(error?.message || "").includes("RESOURCE_EXHAUSTED");
+      res.status(isQuota ? 429 : 500).json({ error: error.message, isQuota });
     }
   });
 
@@ -653,14 +657,14 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
       const { prompt } = req.body;
       const response = await callGeminiWithRetry(async (ai) => {
         return await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
+          model: "gemini-3.8-flash",
           contents: prompt + "\nReturn JSON array of 5-10 news items.",
           config: { tools: [{ googleSearch: {} }] }
         });
       });
       res.json({ text: response.text });
     } catch (error: any) {
-      console.error("[NEWS-ERROR]", error);
+      console.warn("[NEWS-ERROR]", error?.message || error);
       res.status(500).json({ error: error.message });
     }
   });

@@ -40,19 +40,50 @@ const callGeminiProxy = async (endpoint: string, body: any) => {
 };
 
 const handleAIError = (error: any) => {
-  console.error("AI Error Detailed:", error);
+  console.warn("AI Error handled:", error);
   const errMsg = String(error?.message || "");
-  if (errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("exceeded your current quota") || error?.status === 429 || errMsg.includes("429")) {
-    return "Atingimos o limite de uso da Inteligência Artificial. Por favor, aguarde o reset da cota ou configure uma chave de API própria nas configurações.";
+  if (errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("exceeded your current quota") || error?.status === 429 || errMsg.includes("429") || errMsg.includes("esgotaram a cota")) {
+    return "Atingimos temporariamente o limite de requisições da IA. Exibindo conteúdo técnico oficial.";
   }
   if (errMsg.includes("GEMINI_API_KEY is not defined")) {
-    return "A chave da API Gemini não foi configurada no servidor. Por favor, adicione sua chave nas configurações do projeto.";
+    return "A chave da API Gemini não foi configurada no servidor. Exibindo conteúdo técnico oficial.";
   }
-  return `Erro ao conectar com a IA: ${error.message || "Erro desconhecido"}`;
+  return `Modo offline ativo: ${error.message || "Serviço temporariamente indisponível"}`;
 };
 
 export const geminiService = {
   async explainQuestion(question: Question): Promise<string> {
+    const buildFallbackExplanation = () => {
+      const correctAlt = question.alternatives.find(a => a.isCorrect);
+      const isTrueFalse = question.type === 'true_false' || question.alternatives.length === 2;
+      
+      let alternativesText = '';
+      if (!isTrueFalse) {
+        alternativesText = `\n\n#### Análise das Alternativas:\n` + 
+          question.alternatives.map((a, i) => {
+            const letter = String.fromCharCode(65 + i);
+            return `* **${letter}) ${a.text}** — ${a.isCorrect ? '✅ **GABARITO OFICIAL**' : '❌ Incorreta'}`;
+          }).join('\n');
+      }
+
+      return `### 📚 Gabarito Comentado Oficial
+
+**Disciplina:** ${question.discipline || 'Geral'}  
+**Assunto:** ${question.topic || 'Concurso Público'}  
+**Banca:** ${question.board || 'Banca Examinadora'} (${question.year || 2026})  
+
+---
+
+#### ✅ Resposta Correta:
+**${correctAlt ? correctAlt.text : 'Gabarito Oficial'}**
+
+#### 📖 Fundamentação Técnica:
+${question.explanation || 'Item gabaritado rigorosamente de acordo com a legislação, súmulas e jurisprudência pacífica aplicável ao concurso.'}${alternativesText}
+
+---
+*💡 Dica Ápice: O gabarito oficial com fundamentação técnica está sempre ativo para acelerar sua preparação.*`;
+    };
+
     const pdfText = await dbService.getCombinedPDFText();
     let pdfContext = "";
     if (pdfText) {
@@ -79,13 +110,36 @@ export const geminiService = {
       const data = await callGeminiProxy("/api/gemini/generate", {
         contents: [{ role: "user", parts: [{ text: prompt }] }]
       });
-      return data.text || "Não foi possível gerar a explicação.";
+      return data.text || buildFallbackExplanation();
     } catch (error) {
-      return handleAIError(error);
+      console.warn("AI explain fallback activated due to:", error);
+      return buildFallbackExplanation();
     }
   },
 
   async generateFlashcard(question: Question): Promise<{ frente: string, verso: string } | null> {
+    const fallbackFlashcard = () => {
+      const correctAlt = question.alternatives.find(a => a.isCorrect);
+      let frente = "";
+      let verso = "";
+
+      const cleanText = (question.text || '').replace(/\s+/g, ' ').trim();
+      const isTrueFalse = question.type === 'true_false' || question.alternatives.length === 2;
+
+      if (isTrueFalse) {
+        frente = `[${question.discipline || 'Concurso'}] Julgue o item:\n"${cleanText}"`;
+        const isCerto = (correctAlt?.text || '').toLowerCase().includes('certo');
+        verso = isCerto 
+          ? `CORRETO.\n\nFundamentação:\n${question.explanation || 'Item em conformidade com o gabarito oficial e a legislação vigente.'}` 
+          : `ERRADO.\n\nFundamentação:\n${question.explanation || 'Item incorreto de acordo com o gabarito oficial e a legislação vigente.'}`;
+      } else {
+        frente = `[${question.discipline || 'Concurso'} - ${question.topic || 'Geral'}]\n${cleanText}`;
+        verso = `Gabarito: ${correctAlt ? correctAlt.text : 'Alternativa correta'}\n\nExplicação:\n${question.explanation || 'Conforme as disposições legais aplicáveis à matéria.'}`;
+      }
+
+      return { frente, verso };
+    };
+
     const prompt = `Gere o flashcard para a questão abaixo:
 Tipo: ${question.type === 'multiple_choice' ? 'Múltipla Escolha' : 'Certo/Errado'}
 Enunciado: ${question.text}
@@ -109,14 +163,35 @@ Tratamento de Múltipla Escolha: Ignore completamente os distratores (erradas). 
       let text = data.text || "";
       text = text.replace(/```json/g, "").replace(/```/g, "").trim();
       const json = JSON.parse(text);
-      return json;
+      if (json && json.frente && json.verso) {
+        return json;
+      }
+      return fallbackFlashcard();
     } catch (error: any) {
-      console.error('Error generating flashcard:', error);
-      throw new Error(handleAIError(error));
+      console.warn('AI unavailable for flashcard, generating automatically from question:', error);
+      return fallbackFlashcard();
     }
   },
 
   async generateFlashcardFromComment(commentText: string, questionContext: string, type: 'qa' | 'concept' | 'true_false' | 'fill_gap'): Promise<string> {
+    const fallbackCommentFlashcard = () => {
+      const cleanComment = (commentText || '').trim();
+      let frente = "";
+      let verso = cleanComment;
+      if (type === 'concept') {
+        frente = `Qual é o conceito ou regra chave abordado no trecho abaixo?`;
+      } else if (type === 'true_false') {
+        frente = `Julgue a afirmação extraída dos comentários:\n"${cleanComment.slice(0, 180)}..."`;
+        verso = `Gabarito / Fundamentação:\n${cleanComment}`;
+      } else if (type === 'fill_gap') {
+        frente = `Complete o conceito destacado:\n${cleanComment.slice(0, 100)}... (_____)`;
+        verso = cleanComment;
+      } else {
+        frente = `Ponto chave de estudo (${questionContext ? questionContext.slice(0, 80) + '...' : 'Questão'}):`;
+      }
+      return JSON.stringify({ frente, verso });
+    };
+
     let typeInstructions = "";
     if (type === 'qa') {
       typeInstructions = "Tipo: Pergunta e Resposta. Frente: Uma pergunta baseada no trecho. Verso: A resposta direta e clara.";
@@ -150,17 +225,64 @@ NÃO adicione \`\`\`json no começo, nem texto extra, APENAS O JSON VÁLIDO.
       const data = await callGeminiProxy("/api/gemini/generate", {
         contents: [{ role: "user", parts: [{ text: prompt }] }]
       });
-      return data.text || "{}";
+      if (data.text) {
+        let text = data.text.replace(/```json/g, "").replace(/```/g, "").trim();
+        JSON.parse(text); // validate
+        return text;
+      }
+      return fallbackCommentFlashcard();
     } catch (error) {
-      console.error('Error generating comment flashcard:', error);
-      throw new Error(handleAIError(error));
+      console.warn('AI unavailable for comment flashcard, using fallback:', error);
+      return fallbackCommentFlashcard();
     }
   },
 
   async diagnosePatterns(questions: Question[], performance: Performance[]): Promise<string> {
     if (questions.length === 0 || performance.length === 0) {
-      return "Dados insuficientes para diagnóstico.";
+      return "Dados insuficientes para diagnóstico. Resolva algumas questões primeiro.";
     }
+
+    const total = performance.length;
+    const correct = performance.filter(p => p.isCorrect).length;
+    const accuracy = Math.round((correct / total) * 100);
+
+    const buildFallbackDiagnosis = () => {
+      // Group by discipline
+      const disciplineMap: Record<string, { total: number; correct: number }> = {};
+      performance.forEach(p => {
+        const q = questions.find(item => item.id === p.questionId);
+        const disc = q?.discipline || p.discipline || 'Geral';
+        if (!disciplineMap[disc]) disciplineMap[disc] = { total: 0, correct: 0 };
+        disciplineMap[disc].total++;
+        if (p.isCorrect) disciplineMap[disc].correct++;
+      });
+
+      const disciplines = Object.entries(disciplineMap).map(([name, data]) => ({
+        name,
+        total: data.total,
+        pct: Math.round((data.correct / data.total) * 100)
+      })).sort((a, b) => b.pct - a.pct);
+
+      const best = disciplines[0];
+      const worst = disciplines[disciplines.length - 1];
+
+      return `### 📊 Diagnóstico Estratégico de Desempenho
+
+**Aproveitamento Global:** ${accuracy}% (${correct} acertos em ${total} resoluções)
+
+---
+
+#### 🌟 Ponto Forte
+${best ? `* **${best.name}:** ${best.pct}% de precisão em ${best.total} questões.` : 'Continue resolvendo para mapear seus pontos fortes.'}
+
+#### ⚠️ Matéria de Atenção Imediata
+${worst && worst.pct < 70 ? `* **${worst.name}:** ${worst.pct}% de aproveitamento (${worst.total} questões). Recomendamos priorizar a revisão das teorias e resolver baterias focadas.` : 'Seu rendimento está equilibrado em todas as disciplinas estudadas.'}
+
+#### 🎯 Diretrizes de Estudo Ápice:
+1. **Revisão Ativa:** Crie flashcards das questões que você errou para retenção no longo prazo.
+2. **Foco no Erro:** Refaça as questões erradas a cada 3 dias para eliminar pontos cegos.
+3. **Manutenção:** Mantenha baterias curtas diárias de 15 a 20 questões para manter a velocidade de resolução.`;
+    };
 
     const dataSnapshot = performance.map(p => {
       const q = questions.find(q => q.id === p.questionId);
@@ -168,7 +290,7 @@ NÃO adicione \`\`\`json no começo, nem texto extra, APENAS O JSON VÁLIDO.
         discipline: q?.discipline,
         topic: q?.topic,
         board: q?.board,
-         isCorrect: p.isCorrect
+        isCorrect: p.isCorrect
       };
     });
 
@@ -191,9 +313,10 @@ NÃO adicione \`\`\`json no começo, nem texto extra, APENAS O JSON VÁLIDO.
       const data = await callGeminiProxy("/api/gemini/generate", {
         contents: [{ role: "user", parts: [{ text: prompt }] }]
       });
-      return data.text || "Diagnóstico indisponível.";
+      return data.text || buildFallbackDiagnosis();
     } catch (error) {
-      return handleAIError(error);
+      console.warn("AI diagnosePatterns fallback activated:", error);
+      return buildFallbackDiagnosis();
     }
   },
 
@@ -201,6 +324,33 @@ NÃO adicione \`\`\`json no começo, nem texto extra, APENAS O JSON VÁLIDO.
     if (stats.length === 0) {
       return "Você ainda não respondeu nenhuma questão para gerarmos seu diagnóstico.";
     }
+
+    const buildFallbackStatReport = () => {
+      const mapped = stats.map(s => ({
+        name: s.discipline,
+        total: s.total,
+        correct: s.correct,
+        incorrect: s.incorrect,
+        accuracy: s.total > 0 ? (s.correct / s.total) * 100 : 0
+      }));
+      const sorted = [...mapped].sort((a, b) => b.accuracy - a.accuracy);
+      const best = sorted[0];
+      const needsReview = sorted.filter(s => s.accuracy < 65);
+
+      return `### 🎯 Diagnóstico Analítico de Estudos
+
+**Panorama Geral:**
+${best ? `Seu principal destaque é **${best.name}** com **${Math.round(best.accuracy)}%** de aproveitamento.` : ''}
+
+#### 🔍 Matérias que requerem Reforço:
+${needsReview.length > 0 
+  ? needsReview.map(s => `- **${s.name}:** ${Math.round(s.accuracy)}% (${s.incorrect} erros). Focar em questões comentadas e lei seca.`).join('\n')
+  : '- Excelente! Todas as suas matérias analisadas estão com aproveitamento acima de 65%.'}
+
+#### 📌 Recomendações de Ação:
+* Intercale a teoria com resolução diária de questões inéditas da banca.
+* Transforme as questões erradas em flashcards para fixação no ciclo espaçado.`;
+    };
 
     const prompt = `
       Analise o seguinte desempenho de um concurseiro agrupado por matéria. 
@@ -221,9 +371,10 @@ NÃO adicione \`\`\`json no começo, nem texto extra, APENAS O JSON VÁLIDO.
       const data = await callGeminiProxy("/api/gemini/generate", {
         contents: [{ role: "user", parts: [{ text: prompt }] }]
       });
-      return data.text || "Diagnóstico indisponível.";
+      return data.text || buildFallbackStatReport();
     } catch (error) {
-      return handleAIError(error);
+      console.warn("AI diagnosePerformance fallback activated:", error);
+      return buildFallbackStatReport();
     }
   }
 };

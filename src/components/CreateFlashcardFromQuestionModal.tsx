@@ -68,7 +68,10 @@ export function CreateFlashcardFromQuestionModal({
          setBack(generated.verso);
       }
     } catch (e: any) {
-      alert("Erro ao gerar flashcard: " + e.message);
+      console.warn("AI generation failed, applying question fallback:", e);
+      const correctAlt = question.alternatives.find(a => a.isCorrect);
+      setFront(`[${question.discipline || 'Concurso'}]\n${question.text}`);
+      setBack(`Gabarito: ${correctAlt ? correctAlt.text : 'Correto'}\n\n${question.explanation || ''}`);
     }
     setIsGenerating(false);
   };

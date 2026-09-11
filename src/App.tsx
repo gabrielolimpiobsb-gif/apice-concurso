@@ -383,6 +383,13 @@ function MainApp() {
                 planStatus: 'premium',
                 subscription: 'active'
               }, { merge: true });
+              try {
+                const cachedRaw = localStorage.getItem(`apses_user_profile_${user.uid}`);
+                const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+                const updated = { ...cached, planStatus: 'premium', subscription: 'active' };
+                localStorage.setItem(`apses_user_profile_${user.uid}`, JSON.stringify(updated));
+                window.dispatchEvent(new CustomEvent('apses:profile-updated', { detail: updated }));
+              } catch (e) {}
               setShowPremiumSuccessModal(true);
               // Clean URL
               window.history.replaceState({}, document.title, "/");
@@ -392,22 +399,18 @@ function MainApp() {
           }
 
           
-          // Sync tasks and cycle from account
-          const [cloudTasks, cloudCycle, cloudSettings] = await Promise.all([
-            firebaseStorageService.syncTasks(),
-            firebaseStorageService.syncCycleConfig(),
-            firebaseStorageService.getUserSettings()
-          ]);
-          
-          if (cloudTasks.length > 0) {
-            storageService.setTasks(cloudTasks);
-          }
-          if (cloudCycle) {
-            storageService.setCycleConfig(cloudCycle);
-          }
-          if (cloudSettings?.scheduleMode) {
-            storageService.setScheduleMode(cloudSettings.scheduleMode);
-          }
+          // Sync tasks and cycle asynchronously without delaying profile identification
+          firebaseStorageService.syncTasks().then(cloudTasks => {
+            if (cloudTasks && cloudTasks.length > 0) storageService.setTasks(cloudTasks);
+          }).catch(console.warn);
+
+          firebaseStorageService.syncCycleConfig().then(cloudCycle => {
+            if (cloudCycle) storageService.setCycleConfig(cloudCycle);
+          }).catch(console.warn);
+
+          firebaseStorageService.getUserSettings().then(cloudSettings => {
+            if (cloudSettings?.scheduleMode) storageService.setScheduleMode(cloudSettings.scheduleMode);
+          }).catch(console.warn);
         }
       } catch (error) {
         console.warn("Initialization error:", error);
@@ -434,8 +437,14 @@ function MainApp() {
         }
 
         try {
-           const initialPerfs = await firebaseStorageService.getPerformancesOnce();
-           setPerformance(initialPerfs);
+           // Parallelize user identification and performance fetch so premium status is resolved immediately in Carregando dados
+           const [, initialPerfs] = await Promise.all([
+              firebaseStorageService.ensureUserExists().catch(() => null),
+              firebaseStorageService.getPerformancesOnce().catch(() => [])
+           ]);
+           if (initialPerfs) {
+             setPerformance(initialPerfs);
+           }
         } catch (e) {
            console.error(e);
         } finally {
@@ -536,7 +545,11 @@ function MainApp() {
   };
 
   const renderContent = () => {
-    if (isLoadingPerformance && activeTab !== 'filter') {
+    // Garante que o status do usuário (premium ou free) seja identificado durante a aba "Carregando dados..."
+    const isIdentifyingUser = Boolean(user && (profileLoading || !profile));
+    const isDataLoading = (isLoadingPerformance || isIdentifyingUser) && activeTab !== 'filter';
+
+    if (isDataLoading) {
       return (
         <div className="flex-1 flex flex-col items-center justify-center h-full text-black dark:text-white bg-[#f9fafc] dark:bg-[#01142e]">
            <Loader2 size={32} className="animate-spin text-purple-500 mb-4" />
@@ -573,7 +586,7 @@ function MainApp() {
             initialTab={targetFilterTab || 'simples'}
             key={targetFilterTab || 'simples'}
             performance={performance}
-            isLoadingData={isLoadingPerformance}
+            isLoadingData={isLoadingPerformance || Boolean(user && (profileLoading || !profile))}
             onNavigate={handleTabChange}
             onStartTraining={(filtered, config) => {
               setActiveSession(null);

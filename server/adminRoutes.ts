@@ -50,15 +50,35 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      
+      const historyMap = {};
+      const getDayKey = (d) => {
+        try {
+          return d.toISOString().split('T')[0];
+        } catch(e) { return new Date().toISOString().split('T')[0]; }
+      };
+
       usersSnap.forEach(doc => {
         const data = doc.data();
-        if (data.planStatus === 'premium') {
+        
+        // Verifica se a assinatura foi validada pela Stripe
+        const isStripeValidated = !!(data.stripeSubscriptionId || data.stripeCustomerId || data.subscription === 'active');
+        
+        if (data.planStatus === 'premium' && isStripeValidated) {
            activeSubscribers++;
         }
+        
         if (data.createdAt) {
           const createdAt = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
           if (createdAt >= startOfMonth) {
             newUsersThisMonth++;
+          }
+          
+          const key = getDayKey(createdAt);
+          if (!historyMap[key]) historyMap[key] = { date: key, newUsers: 0, newSubs: 0, flashcardsAmount: 0 };
+          historyMap[key].newUsers++;
+          if (data.planStatus === 'premium' && isStripeValidated) {
+             historyMap[key].newSubs++;
           }
         }
       });
@@ -75,8 +95,18 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
         if (pData.status === 'approved' || pData.paymentStatus === 'paid') {
           flashcardSalesCount++;
           flashcardRevenue += Number(pData.amount || 0);
+          
+          const d = pData.timestamp ? new Date(pData.timestamp) : (pData.createdAt ? new Date(pData.createdAt) : null);
+          if (d) {
+             const key = getDayKey(d);
+             if (!historyMap[key]) historyMap[key] = { date: key, newUsers: 0, newSubs: 0, flashcardsAmount: 0 };
+             historyMap[key].flashcardsAmount += Number(pData.amount || 0);
+          }
         }
       });
+      
+      const history = Object.values(historyMap).sort((a: any, b: any) => b.date.localeCompare(a.date));
+
 
       res.json({
         totalUsers,
@@ -86,7 +116,8 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
         monthlyRevenue,
         potentialEarnings,
         flashcardSalesCount,
-        flashcardRevenue
+        flashcardRevenue,
+        history
       });
     } catch (error) {
       console.error("[ADMIN-STATS-ERROR]", error);

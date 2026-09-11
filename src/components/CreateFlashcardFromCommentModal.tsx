@@ -67,7 +67,9 @@ export function CreateFlashcardFromCommentModal({
         setBack(rawRes);
       }
     } catch (e: any) {
-      alert("Erro ao gerar flashcard: " + e.message);
+      console.warn("Error generating comment flashcard:", e);
+      setFront("Ponto Importante do Comentário:");
+      setBack(commentText);
     }
     setIsGenerating(false);
   };

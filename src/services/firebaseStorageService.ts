@@ -862,6 +862,10 @@ export const firebaseStorageService = {
     // 1. Skip if synced within the cooldown to avoid spamming the server
     if (lastSyncTimeByUid[uid] && (now - lastSyncTimeByUid[uid] < SYNC_COOLDOWN)) {
       console.log("[STORAGE] Sync skipped: synced recently within cooldown period.");
+      try {
+        const cached = localStorage.getItem(`apses_user_profile_${uid}`);
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
       return;
     }
     
@@ -872,14 +876,14 @@ export const firebaseStorageService = {
     }
     
     activeSyncPromise = (async () => {
-      let retries = 3;
-      let delay = 1000;
+      let retries = 2;
+      let delay = 300;
       
       while (retries > 0) {
         try {
           const idToken = await currentUser.getIdToken();
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
           const response = await fetch('/api/profile/initialize', {
             signal: controller.signal,
             method: 'POST',
@@ -897,6 +901,12 @@ export const firebaseStorageService = {
 
           const userData = await response.json();
           
+          // Cache user profile and planStatus immediately so useSubscription resolves without delay
+          try {
+            localStorage.setItem(`apses_user_profile_${uid}`, JSON.stringify(userData));
+            window.dispatchEvent(new CustomEvent('apses:profile-updated', { detail: userData }));
+          } catch (e) {}
+
           // Sync theme on startup if possible
           if (userData?.settings?.darkMode) {
             document.documentElement.classList.add("dark");
@@ -911,7 +921,11 @@ export const firebaseStorageService = {
           console.warn(`Failed to sync user with server (attempts left: ${retries})`, error);
           if (retries === 0) {
             activeSyncPromise = null;
-            // Return fallback user profile instead of crashing UI on quota limit
+            // Return cached user profile if exists, else fallback
+            try {
+              const cached = localStorage.getItem(`apses_user_profile_${uid}`);
+              if (cached) return JSON.parse(cached);
+            } catch (e) {}
             return {
               uid: currentUser.uid,
               email: currentUser.email || '',

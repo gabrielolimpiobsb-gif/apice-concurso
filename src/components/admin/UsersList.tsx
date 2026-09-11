@@ -54,6 +54,15 @@ export function UsersList() {
         setSuccess("Usuário promovido a Premium!");
         const newUsers = users.map(u => u.uid === uid ? { ...u, planStatus: 'premium' } : u);
         setUsers(newUsers);
+        if (user?.uid === uid) {
+          try {
+            const raw = localStorage.getItem(`apses_user_profile_${uid}`);
+            const current = raw ? JSON.parse(raw) : {};
+            const updated = { ...current, planStatus: 'premium' };
+            localStorage.setItem(`apses_user_profile_${uid}`, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent('apses:profile-updated', { detail: updated }));
+          } catch(e) {}
+        }
         setTimeout(() => setSuccess(null), 3000);
       } else {
         const err = await res.json().catch(() => ({}));
@@ -78,6 +87,15 @@ export function UsersList() {
         setSuccess("Premium removido com sucesso!");
         const newUsers = users.map(u => u.uid === uid ? { ...u, planStatus: 'free' } : u);
         setUsers(newUsers);
+        if (user?.uid === uid) {
+          try {
+            const raw = localStorage.getItem(`apses_user_profile_${uid}`);
+            const current = raw ? JSON.parse(raw) : {};
+            const updated = { ...current, planStatus: 'free' };
+            localStorage.setItem(`apses_user_profile_${uid}`, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent('apses:profile-updated', { detail: updated }));
+          } catch(e) {}
+        }
         setTimeout(() => setSuccess(null), 3000);
       } else {
         const err = await res.json().catch(() => ({}));

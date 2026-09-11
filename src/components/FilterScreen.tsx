@@ -337,6 +337,9 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
     const clean = banca.trim();
     const lower = clean.toLowerCase();
 
+    if (lower.includes('apice') || lower.includes('ápice') || lower.includes('inedita') || lower.includes('inédita')) {
+      return 'Inéditas Ápice Concurso';
+    }
     if (lower.includes('cespe') || lower.includes('cebraspe')) {
       return 'Cebraspe (CESPE)';
     }
@@ -393,7 +396,7 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
     if (lower.includes('constitucional')) {
       return 'Direito Constitucional';
     }
-    if (lower.includes('administrativo') && lower.includes('direito')) {
+    if (lower.includes('administrativo')) {
       return 'Direito Administrativo';
     }
     if (lower.includes('processual penal')) {
@@ -405,6 +408,21 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
     if (lower.includes('direitos humanos')) {
       return 'Direitos Humanos';
     }
+    if (lower.includes('seguridade') || lower.includes('previdenciário') || lower.includes('previdenciario')) {
+      return 'Direito Previdenciário';
+    }
+    if (lower.includes('contabilidade')) {
+      return 'Contabilidade Geral';
+    }
+    if (lower.includes('criminologia')) {
+      return 'Criminologia';
+    }
+    if (lower.includes('física') || lower.includes('fisica')) {
+      return 'Física';
+    }
+    if (lower.includes('legislação especial') || lower.includes('leg. especial')) {
+      return 'Legislação Especial';
+    }
     if (lower.includes('raciocínio') || lower.includes('raciocinio') || lower.includes('matemática') || lower.includes('matematica')) {
       if (lower.includes('racioc') && (lower.includes('matem') || lower.includes('logico') || lower.includes('lógico'))) {
         return 'Raciocínio Lógico e Matemático';
@@ -415,7 +433,7 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
     if (lower.includes('informática') || lower.includes('informatica')) {
       return 'Informática';
     }
-    if (lower.includes('legislação de trânsito') || lower.includes('transito') || lower.includes('trânsito')) {
+    if (lower.includes('legislação de trânsito') || lower.includes('transito') || lower.includes('trânsito') || lower.includes('ctb')) {
       return 'Legislação de Trânsito';
     }
     if (lower.includes('ética') || lower.includes('etica')) {
@@ -439,7 +457,11 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
         if (c) canonicalSet.add(c);
       }
     });
-    return Array.from(canonicalSet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    return Array.from(canonicalSet).sort((a, b) => {
+      if (a === 'Inéditas Ápice Concurso') return -1;
+      if (b === 'Inéditas Ápice Concurso') return 1;
+      return a.localeCompare(b, 'pt-BR');
+    });
   }, [validQuestions]);
   
   const getCargoData = () => {
@@ -689,6 +711,10 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
       value: item,
       count: counts.get(item) || 0
     })).sort((a, b) => {
+      if (category === 'boards') {
+        if (String(a.value) === 'Inéditas Ápice Concurso') return -1;
+        if (String(b.value) === 'Inéditas Ápice Concurso') return 1;
+      }
       if (a.count === 0 && b.count > 0) return 1;
       if (a.count > 0 && b.count === 0) return -1;
       
@@ -1252,6 +1278,8 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
                 const displayLabel = category === 'types' 
                   ? (item === QuestionType.MULTIPLE_CHOICE ? 'Múltipla Escolha' : 'Certo/Errado') 
                   : item;
+                const isApiceInedita = category === 'boards' && item === 'Inéditas Ápice Concurso';
+
                 return (
                   <button
                     key={item}
@@ -1266,7 +1294,18 @@ export const FilterScreen: React.FC<FilterScreenProps> = ({ questions, performan
                     )}
                   >
                     <span className={cn("text-sm font-medium text-left flex items-center gap-2", isSelected ? "text-black dark:text-white" : "text-black dark:text-white")}>
-                      <span>{displayLabel}</span>
+                      {isApiceInedita ? (
+                        <span className="flex items-center gap-2">
+                          <span className="flex items-center gap-1.5">
+                            {displayLabel}
+                          </span>
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 tracking-wider">
+                            Destaque
+                          </span>
+                        </span>
+                      ) : (
+                        <span>{displayLabel}</span>
+                      )}
                       {activeTab !== 'cursos' && category !== 'cursos_selector' && category !== 'cargos_selector' && <span className="text-xs text-black dark:text-white font-mono">({count})</span>}
                     </span>
                     {isSelected && (

@@ -145,6 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (auth.currentUser) {
         try {
+          const uid = auth.currentUser.uid;
+          localStorage.removeItem(`apses_user_profile_${uid}`);
           const token = await auth.currentUser.getIdToken();
           await fetch('/api/auth/logout', {
             method: 'POST',

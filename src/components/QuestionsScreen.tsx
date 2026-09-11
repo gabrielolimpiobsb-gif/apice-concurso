@@ -456,6 +456,12 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
             </div>
             <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-visible">
               <div className={cn("max-w-4xl mx-auto space-y-6 text-black dark:text-white/90", fontSizeClasses[fontSize])}>
+                {(activeQuestion.isInedita || activeQuestion.board === 'Inéditas Ápice Concurso' || activeQuestion.isApiceOriginal) && (
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-sm">
+                    <Sparkles size={14} className="text-amber-400 animate-pulse" />
+                    <span>Questão Inédita • Ápice Concurso (2026)</span>
+                  </div>
+                )}
                 <QuestionTextFormatter text={activeQuestion.text} type={activeQuestion.type} />
               </div>
             </div>
@@ -689,7 +695,7 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                       </div>
                     )}
                     
-                    <div className="relative mt-1.5">
+                    <div className="relative mt-1.5 flex items-center gap-2 flex-wrap">
                       <button 
                         onClick={() => setShowDetails(!showDetails)}
                         className="flex items-center gap-1.5 text-[11px] font-bold text-white hover:text-black dark:text-white transition-colors bg-purple-500/10 px-2 py-1 rounded-md"
@@ -697,6 +703,12 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                         <span className="truncate max-w-[200px] text-left">{activeQuestion.discipline}</span>
                         <ChevronDown size={14} className={cn("transition-transform", showDetails ? "rotate-180" : "")} />
                       </button>
+                      {(activeQuestion.isInedita || activeQuestion.board === 'Inéditas Ápice Concurso' || activeQuestion.isApiceOriginal) && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white shadow-sm border border-purple-400/30">
+                          <Sparkles size={11} className="text-amber-300 animate-pulse" />
+                          Inédita Ápice Concurso
+                        </span>
+                      )}
                       <AnimatePresence>
                         {showDetails && (
                           <motion.div
@@ -719,6 +731,12 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                                        <Calendar size={10} />
                                        {activeQuestion.year}
                                      </span>
+                                     {(activeQuestion.isInedita || activeQuestion.board === 'Inéditas Ápice Concurso' || activeQuestion.isApiceOriginal) && (
+                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                                         <Sparkles size={10} className="text-amber-400" />
+                                         Inédita Ápice
+                                       </span>
+                                     )}
                                    </div>
                                    {(activeQuestion.orgao || activeQuestion.cargo) && (
                                      <div className="flex flex-col gap-0.5 mt-1 border-t border-black/5 dark:border-white/5 pt-1.5">
@@ -889,6 +907,19 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                   {activeTab === 'enunciado' ? (
                     <div className="flex-[1_1_0] overflow-y-auto scrollbar-visible px-4 md:px-8 pt-4 pb-6">
                       
+                      {/* INÉDITA BADGE */}
+                      {(activeQuestion.isInedita || activeQuestion.board === 'Inéditas Ápice Concurso' || activeQuestion.isApiceOriginal) && (
+                        <div className="mb-3 flex items-center justify-between flex-wrap gap-2 px-1">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-purple-500/15 via-amber-500/10 to-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-sm">
+                            <Sparkles size={13} className="text-amber-500 animate-pulse" />
+                            <span>Questão Inédita • Ápice Concurso (2026)</span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-purple-600/90 dark:text-purple-300/90 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+                            Exclusiva Ápice
+                          </span>
+                        </div>
+                      )}
+
                       {/* ENUNCIADO APP AREA */}
                       <div className={cn(
                         "text-black dark:text-white/90 font-medium bg-white dark:bg-[#0a2346]/30 p-5 md:p-6 rounded-3xl border border-purple-500/10 shadow-inner flex flex-col relative mb-8 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10", 

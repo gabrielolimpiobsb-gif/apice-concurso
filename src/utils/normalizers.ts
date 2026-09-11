@@ -1,6 +1,9 @@
 export function normalizeBoard(board: string): string {
     if (!board) return "Banca Desconhecida";
     const upper = board.toUpperCase();
+    if (upper.includes("INEDITAS") || upper.includes("INÉDITAS") || upper.includes("ÁPICE") || upper.includes("APICE")) {
+        return "Inéditas Ápice Concurso";
+    }
     if (upper.includes("CESPE") || upper.includes("CEBRASPE")) return "CEBRASPE (CESPE)";
     if (upper.includes("QUADRIX")) return "Quadrix";
     if (upper.includes("FGV") || upper.includes("GETÚLIO VARGAS") || upper.includes("GETULIO VARGAS")) return "FGV";
@@ -88,6 +91,11 @@ export function normalizeDiscipline(discipline: string): string {
     if (upper.includes("CONTABILIDADE PÚBLICA")) return "Contabilidade Pública";
     if (upper.includes("DIREITOS HUMANOS")) return "Direitos Humanos";
     if (upper.includes("LEGISLAÇÃO DE TRÂNSITO") || upper.includes("CTB")) return "Legislação de Trânsito";
+    if (upper.includes("SEGURIDADE") || upper.includes("PREVIDENCIÁRIO") || upper.includes("PREVIDENCIARIO")) return "Direito Previdenciário";
+    if (upper.includes("CRIMINOLOGIA")) return "Criminologia";
+    if (upper.includes("FÍSICA") || upper.includes("FISICA")) return "Física";
+    if (upper.includes("LEGISLAÇÃO ESPECIAL") || upper.includes("LEG. ESPECIAL")) return "Legislação Especial";
+    if (upper.includes("ÉTICA") || upper.includes("ETICA")) return "Ética no Serviço Público";
     if (upper.includes("SEGURANÇA E SAÚDE NO TRABALHO")) return "Segurança e Saúde no Trabalho";
     if (upper.includes("CONHECIMENTOS ESPECÍFICOS")) return "Conhecimentos Específicos";
     if (upper.includes("ATUALIDADES")) return "Atualidades";

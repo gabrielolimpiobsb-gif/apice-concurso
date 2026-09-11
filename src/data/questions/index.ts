@@ -1,4 +1,5 @@
 import { Question } from "../../types";
+import { apicePackQuestions } from "../../services/packQuestionsAdapter";
 import { portugueseQuestions } from "./portuguese";
 import { penalQuestions } from "./penal";
 import { afoQuestions } from "./afo";
@@ -13,6 +14,7 @@ import { bancoDeQuestoes2 } from "./banco_de_questoes2";
 import { bancoDeQuestoes3 } from "./banco_de_questoes3";
 
 export const allMockQuestions: Question[] = [
+  ...apicePackQuestions,
   ...portugueseQuestions,
   ...penalQuestions,
   ...afoQuestions,
