@@ -75,11 +75,17 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
           }
           
           const key = getDayKey(createdAt);
-          if (!historyMap[key]) historyMap[key] = { date: key, newUsers: 0, newSubs: 0, flashcardsAmount: 0 };
+          if (!historyMap[key]) historyMap[key] = { date: key, newUsers: 0, newSubs: 0, flashcardsAmount: 0, userDetails: [], purchaseDetails: [] };
           historyMap[key].newUsers++;
-          if (data.planStatus === 'premium' && isStripeValidated) {
+          const isPremium = data.planStatus === 'premium' && isStripeValidated;
+          if (isPremium) {
              historyMap[key].newSubs++;
           }
+          historyMap[key].userDetails.push({
+            name: data.displayName || 'Sem Nome',
+            email: data.email || 'Sem E-mail',
+            isPremium
+          });
         }
       });
 
@@ -99,8 +105,13 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
           const d = pData.timestamp ? new Date(pData.timestamp) : (pData.createdAt ? new Date(pData.createdAt) : null);
           if (d) {
              const key = getDayKey(d);
-             if (!historyMap[key]) historyMap[key] = { date: key, newUsers: 0, newSubs: 0, flashcardsAmount: 0 };
+             if (!historyMap[key]) historyMap[key] = { date: key, newUsers: 0, newSubs: 0, flashcardsAmount: 0, userDetails: [], purchaseDetails: [] };
              historyMap[key].flashcardsAmount += Number(pData.amount || 0);
+             historyMap[key].purchaseDetails.push({
+               packTitle: pData.packTitle || 'Pacote de Flashcards',
+               amount: Number(pData.amount || 0),
+               userName: pData.userName || pData.userEmail || 'Usuário'
+             });
           }
         }
       });
