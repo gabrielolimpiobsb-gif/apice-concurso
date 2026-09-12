@@ -421,22 +421,23 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
   
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleStripeCheckout = async (packId: string, packTitle: string, packPrice: number, priceId?: string) => {
+  const handleStripeCheckout = async (packId: string, packTitle: string, packPrice: number, priceId?: string, paymentLink?: string) => {
     try {
       setIsProcessing(true);
       const auth = (await import('../lib/firebase')).auth;
       const user = auth.currentUser;
       
-      // Para pacotes gratuitos (sem priceId), desbloqueia direto
-      if (!priceId) {
+      const foundPack = AVAILABLE_PACKS.find(p => p.id === packId);
+      const specificLink = paymentLink || foundPack?.stripePaymentLink;
+
+      // Para pacotes gratuitos (sem priceId e sem link específico), desbloqueia direto
+      if (!priceId && !specificLink) {
          window.location.href = `${window.location.origin}/?flashcard_success=true&packId=${packId}`;
          return;
       }
       
-      // Link de Pagamento Fixo (Hostinger) 
-      // NOTA: Se você tiver um link específico para flashcards, coloque aqui. 
-      // Por enquanto estou usando o mesmo link principal que você enviou.
-      let stripeLink = "https://buy.stripe.com/7sYeVe7HV4ZAcxmcX9b7y01";
+      // Link de Pagamento Fixo específico do pacote
+      let stripeLink = specificLink || "https://buy.stripe.com/7sYeVe7HV4ZAcxmcX9b7y01";
       
       // Adiciona client_reference_id para webhooks (se aplicável) e o email pre-preenchido
       let queryParams = `?client_reference_id=${user?.uid || 'guest'}_pack_${packId}`;
@@ -1222,7 +1223,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
                           </button>
                         ) : (
                           <button 
-                            onClick={() => isPremium ? handlePurchase(pack.id) : handleStripeCheckout(pack.id, pack.title, pack.price, (pack as any).stripePriceId)}
+                            onClick={() => isPremium ? handlePurchase(pack.id) : handleStripeCheckout(pack.id, pack.title, pack.price, (pack as any).stripePriceId, (pack as any).stripePaymentLink)}
                             className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-lg transition-transform hover:scale-105 active:scale-95"
                           >
                              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />

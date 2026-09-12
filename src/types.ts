@@ -164,6 +164,8 @@ export interface FlashcardPack {
   title: string;
   description: string;
   price: number;
+  stripePriceId?: string;
+  stripePaymentLink?: string;
   coverColor: string;
   imageUrl?: string;
   cardsCount: number;
