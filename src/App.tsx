@@ -29,7 +29,7 @@ import { Logo } from './components/Logo';
 
 import confetti from 'canvas-confetti';
 
-export type NavTab = 'home' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal';
+export type NavTab = 'home' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal';
 
 
 export const tabToUrlMap: Record<NavTab, string> = {
@@ -39,6 +39,7 @@ export const tabToUrlMap: Record<NavTab, string> = {
   'profile': '/perfil',
   'study-plan': '/cronograma',
   'flashcards': '/flashcards',
+  'packs-store': '/loja-pacotes',
   'ranking': '/ranking',
   'analytics': '/desempenho',
   'admin': '/admin',
@@ -63,6 +64,12 @@ function getTabInfoFromUrl(): { tab: NavTab, params?: any } {
      let packId = `pack_${slug}`;
      if (slug === 'prf') packId = 'pack_prf_agente';
      return { tab: 'flashcards', params: { viewingPack: packId } };
+  }
+  if (path.startsWith('/loja-pacotes-')) {
+     const slug = path.replace('/loja-pacotes-', '');
+     let packId = `pack_${slug}`;
+     if (slug === 'prf') packId = 'pack_prf_agente';
+     return { tab: 'packs-store', params: { viewingPack: packId } };
   }
   return { tab: urlToTabMap[path] || 'home' };
 }
@@ -295,7 +302,11 @@ function MainApp() {
       if (newTab === 'blog' && params?.postId) {
          url = '/blog-' + params.postId;
       }
-      if (newTab === 'flashcards' && params?.viewingPack) {
+      if (newTab === 'packs-store' && params?.viewingPack) {
+         let slug = params.viewingPack.replace('pack_', '');
+         if (params.viewingPack === 'pack_prf_agente') slug = 'prf';
+         url = '/loja-pacotes-' + slug;
+      } else if (newTab === 'flashcards' && params?.viewingPack) {
          let slug = params.viewingPack.replace('pack_', '');
          if (params.viewingPack === 'pack_prf_agente') slug = 'prf';
          url = '/flashcards-' + slug;
@@ -660,6 +671,15 @@ function MainApp() {
           <FlashcardsScreen 
             onNavigate={handleTabChange} 
             initialViewingPack={navHistory[navHistory.length - 1]?.params?.viewingPack} 
+            mode="meus"
+          />
+        );
+      case 'packs-store':
+        return (
+          <FlashcardsScreen 
+            onNavigate={handleTabChange} 
+            initialViewingPack={navHistory[navHistory.length - 1]?.params?.viewingPack} 
+            mode="loja"
           />
         );
       case 'ranking':

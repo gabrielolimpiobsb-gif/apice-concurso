@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { createPortal } from 'react-dom';
-import { Layers, ChevronRight, ChevronLeft, RotateCcw, Check, X, Plus, Sparkles, Lightbulb, Trash2, Save, Bookmark, ShoppingBag, Download, Crown, GraduationCap, ArrowLeft, Shuffle, Edit2 } from 'lucide-react';
+import { Layers, ChevronRight, ChevronLeft, RotateCcw, Check, X, Plus, Sparkles, Lightbulb, Trash2, Save, Bookmark, ShoppingBag, Download, Crown, GraduationCap, ArrowLeft, ArrowRight, Shuffle, Edit2, Share2, Copy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { firebaseStorageService } from '../services/firebaseStorageService';
@@ -15,6 +15,7 @@ import { useSEO } from '../lib/useSEO';
 interface FlashcardsScreenProps {
   onNavigate?: (tab: any, params?: any) => void;
   initialViewingPack?: string | null;
+  mode?: "meus" | "loja";
 }
 
 const FLASHCARD_GRADIENTS = [
@@ -142,10 +143,10 @@ const PreviewCarousel = ({ cards }: { cards: Flashcard[] }) => {
   );
 };
 
-export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, initialViewingPack }) => {
+export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, initialViewingPack, mode = "meus" }) => {
   const { isPremium } = useSubscription();
   
-  const [activeTab, setActiveTab] = useState<'meus' | 'loja'>(initialViewingPack ? 'loja' : 'meus');
+  const activeTab = mode;
   const [ownedPacks, setOwnedPacks] = useState<string[]>([]);
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [viewingPack, setViewingPack] = useState<string | null>(initialViewingPack || null);
@@ -153,7 +154,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
   useEffect(() => {
     setViewingPack(initialViewingPack || null);
     if (initialViewingPack) {
-      setActiveTab('loja');
+      if(onNavigate) onNavigate('packs-store');
     }
   }, [initialViewingPack]);
 
@@ -167,6 +168,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isStarted, setIsStarted] = useState(false); // Changed to false initially
   const [isShuffling, setIsShuffling] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState<string | null>(null);
   const [packToRemove, setPackToRemove] = useState<string | null>(null);
@@ -986,11 +988,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
             {onNavigate && (
               <button 
                 onClick={() => {
-                  if (activeTab === 'loja' && viewingPack) {
-                    onNavigate('home');
-                  } else {
-                    onNavigate('back');
-                  }
+                  if (onNavigate) { onNavigate('back'); } else { setViewingPack(null); }
                 }}
                 className="w-10 h-10 bg-white dark:bg-[#0a2346] border border-purple-500/20 rounded-full flex items-center justify-center text-black dark:text-white hover:bg-purple-500/10 transition-colors shadow-sm shrink-0"
               >
@@ -998,18 +996,23 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
               </button>
             )}
             <div>
-              <h1 className="text-3xl font-black text-black dark:text-white flex items-center gap-3">
-                <Layers className="text-purple-500" /> Flashcards
-              </h1>
+              {activeTab === 'meus' ? (
+                <h1 className="text-3xl font-black text-black dark:text-white flex items-center gap-3">
+                  <Layers className="text-purple-500" /> Flashcards
+                </h1>
+              ) : (
+                <h1 className="text-3xl font-black text-black dark:text-white flex items-center gap-3">
+                  <ShoppingBag className="text-purple-500" /> Pacotes Prontos
+                </h1>
+              )}
               <p className="text-black/60 dark:text-white/60 mt-1">Sua central de revisão espaçada.</p>
             </div>
           </div>
-          
           {!(activeTab === 'loja' && viewingPack) && (
           <div className="flex items-center bg-black/5 dark:bg-white/5 p-1 md:p-1.5 rounded-2xl md:rounded-[20px]">
             <button 
               onClick={() => {
-                setActiveTab('meus');
+                if(onNavigate) onNavigate('flashcards');
                 if (onNavigate && viewingPack) onNavigate('flashcards', { reset: true });
               }}
               className={`flex-1 sm:flex-none px-6 py-2.5 md:px-10 md:py-3.5 rounded-xl md:rounded-2xl text-sm md:text-base font-bold transition-all ${activeTab === 'meus' ? 'bg-white dark:bg-[#0a1828] text-purple-500 shadow-sm' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white'}`}
@@ -1018,7 +1021,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
             </button>
             <button 
               onClick={() => {
-                setActiveTab('loja');
+                if(onNavigate) onNavigate('packs-store');
                 if (onNavigate && viewingPack) {
                   onNavigate('flashcards', { reset: true });
                 } else {
@@ -1039,67 +1042,80 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* Meu Baralho Principal */}
-              <div className="bg-white dark:bg-[#0a2346] rounded-3xl p-6 md:p-8 shadow-sm border border-black/5 dark:border-white/10 flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] -mr-10 -mt-10 pointer-events-none" />
+              <div className="bg-white dark:bg-[#0a2346] rounded-3xl p-6 md:p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-black/5 dark:border-white/10 flex flex-col justify-between relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent dark:from-purple-500/[0.05] pointer-events-none" />
+                <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500" />
                 
-                <div>
-                  <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500 mb-4">
-                    <Bookmark size={24} />
+                <div className="relative z-10">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center mb-6 shadow-inner border border-black/10 dark:border-white/10 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+                    <Bookmark size={24} className="text-white" strokeWidth={2} />
                   </div>
-                  <h3 className="text-xl font-bold text-black dark:text-white">Meus Cartões</h3>
-                  <p className="text-black/60 dark:text-white/60 text-sm mt-2">
-                    Cartões criados por você, via inteligência artificial ou partir de questões/comentários.
+                  <h3 className="text-2xl font-black text-black dark:text-white mb-2">Meus Cartões</h3>
+                  <p className="text-black/60 dark:text-white/60 text-sm leading-relaxed">
+                    Cartões criados por você, via inteligência artificial ou a partir de questões e comentários.
                   </p>
                 </div>
                 
-                <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between">
-                  <span className="font-bold text-lg dark:text-white">{myCardsCount} <span className="text-sm font-normal text-black/60 dark:text-white/60">cartões</span></span>
+                <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between relative z-10">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-2xl dark:text-white text-black leading-none">{myCardsCount}</span>
+                    <span className="text-[10px] font-bold text-black/40 dark:text-white/40 uppercase tracking-widest mt-1">Cartões</span>
+                  </div>
                   
-                  <div className="flex gap-2">
-                    <button onClick={() => setShowAddModal(true)} className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white hover:bg-purple-500 hover:text-white transition-colors" title="Criar manual">
-                      <Plus size={20} />
+                  <div className="flex gap-3">
+                    <button onClick={() => setShowAddModal(true)} className="w-12 h-12 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/20 transition-colors" title="Criar manual">
+                      <Plus size={24} />
                     </button>
                     <button 
                       disabled={myCardsCount === 0}
                       onClick={() => handleStartReview(null)}
-                      className="px-6 py-2 bg-purple-500 hover:bg-[#4396a8] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-md"
+                      className="px-6 md:px-8 py-3 bg-black dark:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-black rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-md flex items-center gap-2"
                     >
-                      Estudar
+                      Estudar <ArrowRight size={18} />
                     </button>
                   </div>
                 </div>
               </div>
-
               {/* Pacotes Adicionados */}
               {ownedPacks.map(packId => {
                 const pack = AVAILABLE_PACKS.find(p => p.id === packId);
                 if (!pack) return null;
                 return (
-                  <div key={packId} className="bg-white dark:bg-[#0a2346] rounded-3xl p-6 md:p-8 shadow-sm border border-purple-500/20 flex flex-col justify-between relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[40px] -mr-10 -mt-10 pointer-events-none" />
+                  <div key={packId} className="bg-white dark:bg-[#0a2346] rounded-3xl p-6 md:p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-purple-500/20 flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent dark:from-purple-500/[0.05] pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 rounded-full blur-[50px] -mr-10 -mt-10 pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500" />
                     
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500 mb-4">
-                          <GraduationCap size={24} />
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-inner border border-black/10 dark:border-white/10 group-hover:scale-110 transition-transform duration-300 bg-black/5 dark:bg-white/5">
+                          {pack.imageUrl ? (
+                            <img src={pack.imageUrl} alt={pack.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${pack.coverColor || 'from-purple-500 to-indigo-500'} flex items-center justify-center`}>
+                              <GraduationCap size={24} className="text-white" strokeWidth={2} />
+                            </div>
+                          )}
                         </div>
-                        <button onClick={() => handleRemovePack(packId)} className="text-black/40 dark:text-white/40 hover:text-rose-500 transition-colors" title="Remover pacote">
-                          <Trash2 size={18} />
+                        <button onClick={() => handleRemovePack(packId)} className="w-10 h-10 rounded-full flex items-center justify-center text-black/40 dark:text-white/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Remover pacote">
+                          <Trash2 size={20} />
                         </button>
                       </div>
-                      <h3 className="text-xl font-bold text-black dark:text-white">{pack.title}</h3>
-                      <p className="text-black/60 dark:text-white/60 text-sm mt-2 line-clamp-2">
+                      <h3 className="text-2xl font-black text-black dark:text-white mb-2">{pack.title}</h3>
+                      <p className="text-black/60 dark:text-white/60 text-sm leading-relaxed line-clamp-2">
                         {pack.description}
                       </p>
                     </div>
                     
-                    <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between">
-                      <span className="font-bold text-lg dark:text-white">{pack.cardsCount} <span className="text-sm font-normal text-black/60 dark:text-white/60">cartões</span></span>
+                    <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between relative z-10">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-2xl dark:text-white text-black leading-none">{pack.cardsCount}</span>
+                        <span className="text-[10px] font-bold text-black/40 dark:text-white/40 uppercase tracking-widest mt-1">Cartões</span>
+                      </div>
                       <button 
                         onClick={() => handleStartReview(pack.id)}
-                        className="px-6 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 text-white rounded-xl font-bold transition-all shadow-md"
+                        className="px-6 md:px-8 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 text-white rounded-xl font-bold transition-all shadow-md hover:scale-105 active:scale-95 flex items-center gap-2"
                       >
-                        Estudar
+                        Estudar <ArrowRight size={18} />
                       </button>
                     </div>
                   </div>
@@ -1118,18 +1134,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
               <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
                 
                 <div className="flex flex-col gap-6">
-                  <button 
-                    onClick={() => {
-                      if (onNavigate) {
-                        onNavigate('flashcards', { reset: true });
-                      } else {
-                        setViewingPack(null);
-                      }
-                    }}
-                    className="w-fit flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    <ChevronLeft size={18} /> Voltar para Loja
-                  </button>
+                  
                   
                   <div className={`w-full rounded-[2rem] md:rounded-[3rem] p-8 md:p-16 relative overflow-hidden flex flex-col items-start justify-end min-h-[300px] md:min-h-[400px] shadow-2xl bg-gradient-to-br ${pack.coverColor}`}>
                     {pack.imageUrl ? (
@@ -1139,13 +1144,36 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
                     )}
                     <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0" />
         
-                    <div className="relative z-10 w-full max-w-4xl">
-                      <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6 shadow-lg">
-                         <Layers size={14} /> {pack.cardsCount} Flashcards
+                    <div className="relative z-10 w-full flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                      <div className="max-w-4xl">
+                        <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6 shadow-lg"> 
+                           <Layers size={14} /> {pack.cardsCount} Flashcards
+                        </div>
+                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-md">
+                          {pack.title}
+                        </h1>
                       </div>
-                      <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight drop-shadow-md">
-                        {pack.title}
-                      </h1>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const slug = pack.id.replace('pack_', '');
+                          const url = window.location.origin + '/loja-pacotes-' + (slug === 'prf_agente' ? 'prf' : slug);
+                          navigator.clipboard.writeText(url);
+                          setCopiedLink(true);
+                          setTimeout(() => setCopiedLink(false), 2000);
+                        }}
+                        className="px-6 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 sm:shrink-0 hover:scale-105 active:scale-95"
+                      >
+                        {copiedLink ? (
+                          <>
+                            <Check size={20} className="text-emerald-400" /> Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Share2 size={20} /> Compartilhar
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1173,7 +1201,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
                   
                   <div className="xl:col-span-3 w-full sticky top-32">
                      <div className="bg-white dark:bg-[#0a2346] rounded-[2rem] p-8 shadow-2xl border border-black/5 dark:border-white/10 flex flex-col items-center text-center">
-                        {!isOwned && (
+                        {!isOwned && !isPremium && (
                            <div className="text-5xl font-black text-black dark:text-white mb-2 tracking-tighter">
                              R$ {pack.price.toFixed(2).replace('.', ',')}
                            </div>
@@ -1260,7 +1288,7 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
                     key={pack.id} 
                     onClick={() => {
                       if (onNavigate) {
-                        onNavigate('flashcards', { viewingPack: pack.id });
+                        onNavigate(activeTab === 'loja' ? 'packs-store' : 'flashcards', { viewingPack: pack.id });
                       } else {
                         setViewingPack(pack.id);
                       }

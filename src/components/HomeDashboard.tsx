@@ -5,7 +5,7 @@ import {
   Layers, RotateCcw, Bookmark, Trash2, Trophy, Crown, ArrowUp, 
   ArrowDown, Flame, Menu, X, FileText, BarChart2, Calendar, Sparkles,
   Award, BookOpen, Clock3, Compass, CheckCircle2, ChevronLeft, Zap, HelpCircle,
-  Settings, User, Check, ClipboardCheck, MonitorPlay, GraduationCap, History, Bell, Newspaper, Loader2
+  Settings, User, Check, ClipboardCheck, MonitorPlay, GraduationCap, History, Bell, Newspaper, Loader2, ShoppingBag
 } from 'lucide-react';
 import { Question, Performance, StudySession } from '../types';
 import { useAuth } from '../lib/AuthContext';
@@ -510,6 +510,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                  </button>
                  <button onClick={() => { setIsMenuOpen(false); onNavigate('flashcards'); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
                    <Layers size={20} className="text-white" /> Flashcards
+                 </button>
+                 <button onClick={() => { setIsMenuOpen(false); onNavigate('packs-store'); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
+                   <ShoppingBag size={20} className="text-white" /> Pacotes Prontos
                  </button>
                  <button onClick={() => { setIsMenuOpen(false); onNavigate('ranking'); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
                    <Trophy size={20} className="text-white" /> Ranking
