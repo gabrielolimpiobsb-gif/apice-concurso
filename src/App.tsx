@@ -3,6 +3,7 @@ import { CircularProgress } from './components/CircularProgress';
 import { SubjectChart } from './components/SubjectChart';
 import { QuestionsScreen } from './components/QuestionsScreen';
 import { FilterScreen } from './components/FilterScreen';
+import { SeoQuestionsPage } from './components/SeoQuestionsPage';
 import { HomeDashboard } from './components/HomeDashboard';
 import { ProfileScreen } from './components/ProfileScreen';
 import { StudyPlanScreen } from './components/StudyPlanScreen';
@@ -29,11 +30,12 @@ import { Logo } from './components/Logo';
 
 import confetti from 'canvas-confetti';
 
-export type NavTab = 'home' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal';
+export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal';
 
 
 export const tabToUrlMap: Record<NavTab, string> = {
   'home': '/',
+  'seo-questions': '/questoes',
   'questions': '/questoes',
   'filter': '/filtro',
   'profile': '/perfil',
@@ -71,6 +73,7 @@ function getTabInfoFromUrl(): { tab: NavTab, params?: any } {
      if (slug === 'prf') packId = 'pack_prf_agente';
      return { tab: 'packs-store', params: { viewingPack: packId } };
   }
+  if (path.startsWith('/questoes/')) { return { tab: 'seo-questions', params: { slug: path.replace('/questoes/', '') } }; }
   return { tab: urlToTabMap[path] || 'home' };
 }
 
@@ -608,6 +611,20 @@ function MainApp() {
             onBack={() => handleTabChange('back')}
           />
         );
+      }
+      case 'seo-questions': { 
+        const { slug } = navHistory[navHistory.length - 1].params || { slug: '' }; 
+        return ( 
+          <SeoQuestionsPage 
+            slug={slug} 
+            onStartSolving={(filters, filteredQs) => { 
+               setSessionFilterConfig(filters);
+               setSessionQuestions(filteredQs);
+               handleTabChange('questions'); 
+               handleTabChange('filter'); 
+            }} 
+          /> 
+        ); 
       }
       case 'questions':
         if (!sessionQuestions || sessionQuestions.length === 0) {

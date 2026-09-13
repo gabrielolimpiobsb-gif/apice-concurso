@@ -645,21 +645,21 @@ export const firebaseStorageService = {
   },
 
   incrementDailyQuestions: async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      try {
+        let count = parseInt(localStorage.getItem('apses_anon_questions') || '0', 10);
+        localStorage.setItem('apses_anon_questions', (count + 1).toString());
+        // dispatch event so hook updates
+        window.dispatchEvent(new Event('apses:anon-updated'));
+      } catch(e) {}
+      return;
+    }
     try {
       const docRef = doc(db, "users", auth.currentUser.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const todayStr = getBrazilTodayStr();
-        if (data.lastQuestionResetDate !== todayStr) {
-          await updateDoc(docRef, { 
-            dailyQuestionsCount: 1,
-            lastQuestionResetDate: todayStr
-          });
-        } else {
-          await updateDoc(docRef, { dailyQuestionsCount: increment(1) });
-        }
+        await updateDoc(docRef, { dailyQuestionsCount: increment(1) });
       } else {
         const todayStr = getBrazilTodayStr();
         await setDoc(docRef, { dailyQuestionsCount: 1, lastQuestionResetDate: todayStr }, { merge: true });

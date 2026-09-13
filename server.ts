@@ -1,4 +1,5 @@
 import express from "express";
+import { sitemapRouter } from "./server/sitemapRoutes";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
@@ -141,6 +142,7 @@ function getBrazilTodayStr() {
 }
 
 const app = express();
+  app.use(sitemapRouter);
 app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
   const PORT = 3000;
 

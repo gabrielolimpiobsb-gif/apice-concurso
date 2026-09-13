@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../lib/AuthContext';
 import { X, Crown, CheckCircle2, Zap, ArrowRight, Star } from 'lucide-react';
 
 interface PremiumPaywallProps {
@@ -17,8 +18,14 @@ export const PremiumPaywall: React.FC<PremiumPaywallProps> = ({
   description = "Assine o Premium para ter acesso ilimitado e ferramentas exclusivas e acelerar sua aprovação.",
   feature
 }) => {
+  
+  const { user } = useAuth();
   const handleSubscribe = () => {
     onClose();
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('NAVIGATE_TO', { detail: 'profile' }));
+      return;
+    }
     window.dispatchEvent(new CustomEvent('NAVIGATE_TO', { detail: 'home' }));
     setTimeout(() => {
       document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -93,7 +100,7 @@ export const PremiumPaywall: React.FC<PremiumPaywallProps> = ({
                 onClick={handleSubscribe}
                 className="w-full py-3 bg-purple-500 hover:bg-[#4690A0] text-white rounded-xl font-black text-base shadow-[0_0_20px_rgba(84,172,191,0.3)] flex items-center justify-center gap-2 transition-all active:scale-95 group uppercase tracking-wider"
               >
-                Assinar Plano Premium
+                {!user ? 'Criar Conta Grátis' : 'Assinar Plano Premium'}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

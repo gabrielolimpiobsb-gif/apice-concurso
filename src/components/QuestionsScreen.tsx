@@ -34,6 +34,7 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
   initialSession,
   filterConfig
 }) => {
+  const { user } = useAuth();
   const { canAnswerQuestion, canCreateFlashcard, isPremium, dailyQuestionsLeft, flashcardsLeft } = useSubscription();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallType, setPaywallType] = useState<{title: string, feature: string} | null>(null);
@@ -256,8 +257,13 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
     if (!activeQuestion || !selectedAlternative || isResolved) return;
 
     if (!canAnswerQuestion) {
-      setPaywallType({ title: "Limite de Questões Diárias Ativado", feature: "Questões Comentadas" });
-      setShowPaywall(true);
+      if (!user) {
+        setPaywallType({ title: "Crie sua conta para continuar", feature: "Mais 15 questões gratuitas!" });
+        setShowPaywall(true);
+      } else {
+        setPaywallType({ title: "Limite de Questões Gratuitas Atingido", feature: "Questões Comentadas" });
+        setShowPaywall(true);
+      }
       return;
     }
 
@@ -888,7 +894,7 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                             return;
                         }
                         if (!isPremium && !canCreateFlashcard) {
-                            setPaywallType({ title: "Limite de Flashcards Ativado", feature: "Flashcards" });
+                            setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
                             setShowPaywall(true);
                             return;
                         }
@@ -1109,7 +1115,7 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                                 <button
                                   onClick={() => {
                                       if (!isPremium && !canCreateFlashcard) {
-                                          setPaywallType({ title: "Limite de Flashcards Ativado", feature: "Flashcards" });
+                                          setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
                                           setShowPaywall(true);
                                           return;
                                       }
@@ -1245,7 +1251,7 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                                                  return;
                                              }
                                              if (!isPremium && !canCreateFlashcard) {
-                                                 setPaywallType({ title: "Limite de Flashcards Ativado", feature: "Flashcards" });
+                                                 setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
                                                  setShowPaywall(true);
                                                  return;
                                              }
