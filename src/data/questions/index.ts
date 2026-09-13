@@ -19,24 +19,41 @@ import { bancoAC4 } from "./banco_ac_4";
 import { bancoAC5 } from "./banco_ac_5";
 import { bancoAC6 } from "./banco_ac_6";
 
-export const allMockQuestions: Question[] = [
-  ...apicePackQuestions,
-  ...portugueseQuestions,
-  ...penalQuestions,
-  ...afoQuestions,
-  ...otherQuestions,
-  ...simuladoPRF,
-  ...simuladoIBGE,
-  ...simuladoGranCursosPt1,
-  ...simuladoGranCursosPt2,
-  ...simuladoGranCursosPt3,
-  ...bancoDeQuestoes,
-  ...bancoDeQuestoes2,
-  ...bancoDeQuestoes3,
-  ...bancoAC1,
-  ...bancoAC2,
-  ...bancoAC3,
-  ...bancoAC4,
-  ...bancoAC5,
-  ...bancoAC6,
-];
+export const allMockQuestions: Question[] = (() => {
+  const allQuestions = [
+    ...apicePackQuestions,
+    ...portugueseQuestions,
+    ...penalQuestions,
+    ...afoQuestions,
+    ...otherQuestions,
+    ...simuladoPRF,
+    ...simuladoIBGE,
+    ...simuladoGranCursosPt1,
+    ...simuladoGranCursosPt2,
+    ...simuladoGranCursosPt3,
+    ...bancoDeQuestoes,
+    ...bancoDeQuestoes2,
+    ...bancoDeQuestoes3,
+    ...bancoAC1,
+    ...bancoAC2,
+    ...bancoAC3,
+    ...bancoAC4,
+    ...bancoAC5,
+    ...bancoAC6,
+  ];
+
+  const uniqueQuestions: Question[] = [];
+  const seenIds = new Set<string>();
+  const seenTexts = new Set<string>();
+
+  for (const q of allQuestions) {
+    const cleanText = q.text.replace(/\s+/g, " ").trim().toLowerCase();
+    if (!seenIds.has(q.id) && !seenTexts.has(cleanText)) {
+      seenIds.add(q.id);
+      seenTexts.add(cleanText);
+      uniqueQuestions.push(q);
+    }
+  }
+
+  return uniqueQuestions;
+})();
