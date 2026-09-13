@@ -8,6 +8,7 @@ import { geminiService } from '../services/geminiService';
 import { storageService } from '../services/storageService';
 import { firebaseStorageService, QuestionComment } from '../services/firebaseStorageService';
 import { useSubscription } from '../lib/useSubscription';
+import { useAuth } from '../lib/AuthContext';
 import { auth } from '../lib/firebase';
 import { PremiumPaywall } from './PremiumPaywall';
 import confetti from 'canvas-confetti';
@@ -893,11 +894,15 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                             triggerWarning("Você precisa resolver a questão primeiro para criar um flashcard.");
                             return;
                         }
-                        if (!isPremium && !canCreateFlashcard) {
-                            setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
-                            setShowPaywall(true);
-                            return;
-                        }
+                        if (!canCreateFlashcard) {
+                                          if (!user) {
+                                              setPaywallType({ title: "Crie sua conta para continuar", feature: "Mais 15 flashcards gratuitos!" });
+                                          } else {
+                                              setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
+                                          }
+                                          setShowPaywall(true);
+                                          return;
+                                      }
                         setShowFlashcardFromQuestionModal(true);
                     }}
                     className={cn(
@@ -1114,8 +1119,12 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                                 </div>
                                 <button
                                   onClick={() => {
-                                      if (!isPremium && !canCreateFlashcard) {
-                                          setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
+                                      if (!canCreateFlashcard) {
+                                          if (!user) {
+                                              setPaywallType({ title: "Crie sua conta para continuar", feature: "Mais 15 flashcards gratuitos!" });
+                                          } else {
+                                              setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
+                                          }
                                           setShowPaywall(true);
                                           return;
                                       }
@@ -1250,11 +1259,15 @@ export const QuestionsScreen: React.FC<QuestionsScreenProps> = ({
                                                  triggerWarning("Você precisa resolver a questão primeiro para criar um flashcard.");
                                                  return;
                                              }
-                                             if (!isPremium && !canCreateFlashcard) {
-                                                 setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
-                                                 setShowPaywall(true);
-                                                 return;
-                                             }
+                                             if (!canCreateFlashcard) {
+                                          if (!user) {
+                                              setPaywallType({ title: "Crie sua conta para continuar", feature: "Mais 15 flashcards gratuitos!" });
+                                          } else {
+                                              setPaywallType({ title: "Limite de Flashcards Atingido", feature: "Flashcards" });
+                                          }
+                                          setShowPaywall(true);
+                                          return;
+                                      }
                                              setSelectedCommentText(comment.text);
                                              setShowFlashcardFromCommentModal(true);
                                           }}

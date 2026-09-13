@@ -670,7 +670,14 @@ export const firebaseStorageService = {
   },
 
   incrementAIFlashcards: async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      try {
+        let count = parseInt(localStorage.getItem('apses_anon_flashcards') || '0', 10);
+        localStorage.setItem('apses_anon_flashcards', (count + 1).toString());
+        window.dispatchEvent(new Event('apses:anon-updated'));
+      } catch(e) {}
+      return;
+    }
     try {
       const docRef = doc(db, "users", auth.currentUser.uid);
       await setDoc(docRef, { aiFlashcardsUsedCount: increment(1) }, { merge: true });

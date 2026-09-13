@@ -247,7 +247,7 @@ function MainApp() {
   }, []);
 
   const handleTabChange = (newTab: NavTab | 'back', params?: any) => {
-    if (newTab !== 'back' && !user && ['questions', 'analytics', 'study_plan', 'flashcards', 'ranking', 'admin'].includes(newTab)) {
+    if (newTab !== 'back' && !user && ['analytics', 'study_plan', 'ranking', 'admin'].includes(newTab)) {
       console.warn("Crie uma conta ou faça login para acessar esta funcionalidade.");
       newTab = 'profile';
     }
