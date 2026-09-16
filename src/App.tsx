@@ -158,6 +158,7 @@ function MainApp() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [aiDiagnosis, setAiDiagnosis] = useState<string | null>(null);
   const [inviteInfo, setInviteInfo] = useState<string | null>(null);
+
   const [rankUpNotification, setRankUpNotification] = useState<RankConfig | null>(null);
   const [showPremiumSuccessModal, setShowPremiumSuccessModal] = useState(false);
 
@@ -341,6 +342,23 @@ function MainApp() {
     setDirection(1); // Default simple direction
     setActiveTab(newTab as NavTab);
   };
+
+  useEffect(() => {
+    if (user) {
+      const redirectInfo = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectInfo) {
+        try {
+          const { tab, params } = JSON.parse(redirectInfo);
+          sessionStorage.removeItem('redirectAfterLogin');
+          if (tab) {
+             setTimeout(() => {
+               handleTabChange(tab, params);
+             }, 100);
+          }
+        } catch(e) {}
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     let unsubscribe = () => {};

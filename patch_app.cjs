@@ -1,21 +1,30 @@
 const fs = require('fs');
 let code = fs.readFileSync('src/App.tsx', 'utf8');
 
-const regex = /case 'seo-questions': \{[\s\S]*?<\/SeoQuestionsPage>\s*\);\s*\}/g;
-const newCode = `case 'seo-questions': {
-        const { slug } = navHistory[navHistory.length - 1].params || { slug: '' };
-        return (
-          <SeoQuestionsPage
-            slug={slug}
-            onStartSolving={(filters, filteredQs) => {
-               setSessionFilterConfig(filters);
-               setSessionQuestions(filteredQs);
-               setActiveSession(null);
-               handleTabChange('questions');
-            }}
-          />
-        );
-      }`;
+const regex = /const \[inviteInfo, setInviteInfo\] = useState<string \| null>\(null\);/;
+const replacement = `const [inviteInfo, setInviteInfo] = useState<string | null>(null);
 
-code = code.replace(regex, newCode);
-fs.writeFileSync('src/App.tsx', code);
+  useEffect(() => {
+    if (user) {
+      const redirectInfo = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectInfo) {
+        try {
+          const { tab, params } = JSON.parse(redirectInfo);
+          sessionStorage.removeItem('redirectAfterLogin');
+          if (tab) {
+             setTimeout(() => {
+               handleNavigate(tab, params);
+             }, 100);
+          }
+        } catch(e) {}
+      }
+    }
+  }, [user]);`;
+
+if (regex.test(code)) {
+    code = code.replace(regex, replacement);
+    fs.writeFileSync('src/App.tsx', code);
+    console.log("Patched App successfully");
+} else {
+    console.log("Regex App didn't match");
+}

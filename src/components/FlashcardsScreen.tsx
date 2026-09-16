@@ -462,6 +462,13 @@ export const FlashcardsScreen: React.FC<FlashcardsScreenProps> = ({ onNavigate, 
       setIsProcessing(true);
       const auth = (await import('../lib/firebase')).auth;
       const user = auth.currentUser;
+
+      if (!user) {
+         sessionStorage.setItem('redirectAfterLogin', JSON.stringify({ tab: activeTab === 'loja' ? 'packs-store' : 'flashcards', params: { viewingPack: packId } }));
+         if (onNavigate) onNavigate('profile');
+         setIsProcessing(false);
+         return;
+      }
       
       const foundPack = AVAILABLE_PACKS.find(p => p.id === packId);
       const specificLink = paymentLink || foundPack?.stripePaymentLink;
