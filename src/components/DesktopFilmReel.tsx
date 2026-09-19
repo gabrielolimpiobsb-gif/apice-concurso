@@ -771,7 +771,7 @@ export function DesktopFilmReel({
   const currentFrame = frames[currentIndex];
 
   return (
-    <div className="relative w-full max-w-[95%] xl:max-w-[1600px] mx-auto min-h-[85vh] py-10 flex items-center mb-48 perspective-[2000px] px-8">
+    <div className="relative w-full max-w-[95%] xl:max-w-[1600px] mx-auto min-h-[85vh] lg:min-h-[92vh] py-10 lg:py-16 flex items-center mb-48 perspective-[2000px] px-8">
       {/* Background Particles (Subtle) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[3rem]">
         {Array.from({ length: 15 }).map((_, i) => (
@@ -881,7 +881,7 @@ export function DesktopFilmReel({
                 mass: 1,
               }}
               style={{ willChange: "transform, opacity, filter" }}
-              className="relative w-full bg-[#0a1828] border border-white/5 rounded-[3rem] p-10 lg:p-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden"
+              className="relative w-full bg-[#0a1828] border border-white/5 rounded-[3rem] px-10 py-12 md:py-20 lg:py-28 xl:py-32 lg:px-20 xl:px-24 min-h-[560px] md:min-h-[640px] lg:min-h-[700px] xl:min-h-[760px] flex flex-col lg:flex-row items-center gap-12 lg:gap-20 shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden"
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.2}
