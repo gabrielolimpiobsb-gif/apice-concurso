@@ -795,7 +795,16 @@ export function setupAffiliateRoutes(
 
     const affData = targetDoc.data();
     const rawStatus = String(affData.status || '').toLowerCase().trim();
-    const isActive = rawStatus === 'active' || 
+    const isExplicitlyBlocked = rawStatus === 'blocked' || 
+                                rawStatus === 'bloqueado' || 
+                                rawStatus === 'inactive' || 
+                                rawStatus === 'inativo' || 
+                                rawStatus === 'rejected' || 
+                                rawStatus === 'rejeitado' ||
+                                affData.status === false;
+
+    const isActive = !isExplicitlyBlocked || 
+                     rawStatus === 'active' || 
                      rawStatus === 'approved' || 
                      rawStatus === 'ativo' || 
                      rawStatus === 'ativado' || 
@@ -949,14 +958,14 @@ export function setupAffiliateRoutes(
       return res.json({
         affiliate: {
           id: affDoc.id,
-          name: affData.name,
-          email: affData.email,
-          code: affData.code,
-          commissionRate: affData.commissionRate || 30,
-          status: affData.status,
+          name: affData.name || userProfile.name || (userProfile.email ? userProfile.email.split('@')[0] : 'Afiliado Parceiro'),
+          email: affData.email || userProfile.email || '',
+          code: affData.code || userProfile.userData?.affiliateCode || 'APICE',
+          commissionRate: Number(affData.commissionRate) || 30,
+          status: affData.status || 'active',
           pixKey: affData.pixKey || '',
           pixType: affData.pixType || 'cpf',
-          createdAt: affData.createdAt
+          createdAt: affData.createdAt || new Date().toISOString()
         },
         metrics,
         subscriptions,

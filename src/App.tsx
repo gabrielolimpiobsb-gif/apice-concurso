@@ -649,7 +649,13 @@ function MainApp() {
   const renderContent = () => {
     // Garante que o status do usuário (premium ou free) seja identificado durante a aba "Carregando dados..."
     const isIdentifyingUser = Boolean(user && (profileLoading || !profile));
-    const isDataLoading = (isLoadingPerformance || isIdentifyingUser) && activeTab !== 'filter';
+    const isDataLoading = (isLoadingPerformance || isIdentifyingUser) && 
+      activeTab !== 'filter' && 
+      activeTab !== 'affiliate-portal' && 
+      activeTab !== 'admin' && 
+      activeTab !== 'sales-anual' && 
+      activeTab !== 'sales-mensal' && 
+      activeTab !== 'blog';
 
     if (isDataLoading) {
       return (
