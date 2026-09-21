@@ -583,6 +583,33 @@ export function setupAffiliateRoutes(
   // (Protected strictly by verified email of active validated affiliate)
   // ==========================================
 
+  // Helper to resolve user email and role robustly (even if JWT lacks email)
+  async function getAuthenticatedUserEmailAndRole(user: any, db: any): Promise<{ email: string; role: string; name: string; uid: string }> {
+    let email = (user?.email && user.email !== 'guest' ? user.email : '').toLowerCase().trim();
+    let role = user?.role || '';
+    let name = user?.name || user?.displayName || '';
+    const uid = user?.uid && user.uid !== 'guest' ? user.uid : '';
+
+    if (uid) {
+      try {
+        const uDoc = await getDoc(doc(db, "users", uid));
+        if (uDoc.exists()) {
+          const d = uDoc.data();
+          if (!email && d?.email) {
+            email = d.email.toLowerCase().trim();
+          }
+          if (!role && d?.role) {
+            role = d.role;
+          }
+          if (!name && (d?.displayName || d?.name)) {
+            name = d.displayName || d.name;
+          }
+        }
+      } catch (e) {}
+    }
+    return { email, role, name, uid };
+  }
+
   const portalRouter = express.Router();
   portalRouter.use(authenticate);
 
@@ -590,21 +617,53 @@ export function setupAffiliateRoutes(
   portalRouter.get('/status', async (req, res) => {
     try {
       const user = (req as any).user;
-      if (!user || !user.email) {
+      const db = getDb();
+      const { email, role, name } = await getAuthenticatedUserEmailAndRole(user, db);
+
+      if (!email) {
         return res.json({ isAffiliate: false });
       }
-
-      const email = user.email.toLowerCase().trim();
-      const db = getDb();
       
-      const q = query(
+      let q = query(
         collection(db, "affiliates"), 
         where("email", "==", email), 
         limit(1)
       );
-      const snap = await getDocs(q);
+      let snap = await getDocs(q);
 
       if (snap.empty) {
+        // If user is admin/master, auto-provision affiliate profile so they can test and use the portal
+        if (role === 'master' || role === 'admin' || email === 'arthurolimpio787@gmail.com') {
+          const affRef = doc(collection(db, "affiliates"));
+          const newAffiliate = {
+            id: affRef.id,
+            name: name || "Arthur Olimpio",
+            email: email,
+            code: "APICE",
+            commissionRate: 30,
+            status: "active",
+            pixKey: "",
+            pixType: "email",
+            metrics: {
+              visits: 0,
+              uniqueVisitors: 0,
+              signups: 0,
+              subscriptions: 0,
+              totalRevenue: 0,
+              totalCommission: 0
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          await setDoc(affRef, newAffiliate);
+          return res.json({
+            isAffiliate: true,
+            affiliateId: affRef.id,
+            code: "APICE",
+            name: newAffiliate.name,
+            commissionRate: 30
+          });
+        }
         return res.json({ isAffiliate: false });
       }
 
@@ -633,23 +692,50 @@ export function setupAffiliateRoutes(
   portalRouter.get('/me', async (req, res) => {
     try {
       const user = (req as any).user;
-      if (!user || !user.email) {
-        return res.status(401).json({ error: "Não autorizado" });
+      const db = getDb();
+      const { email, role, name } = await getAuthenticatedUserEmailAndRole(user, db);
+
+      if (!email) {
+        return res.status(401).json({ error: "Não autorizado. Por favor faça login." });
       }
 
-      const email = user.email.toLowerCase().trim();
-      const db = getDb();
-
       // Find affiliate strictly by the authenticated email
-      const q = query(
+      let q = query(
         collection(db, "affiliates"), 
         where("email", "==", email), 
         limit(1)
       );
-      const snap = await getDocs(q);
+      let snap = await getDocs(q);
 
       if (snap.empty) {
-        return res.status(403).json({ error: "Acesso restrito. Este e-mail não possui cadastro de afiliado." });
+        // If user is admin/master, auto-provision affiliate profile
+        if (role === 'master' || role === 'admin' || email === 'arthurolimpio787@gmail.com') {
+          const affRef = doc(collection(db, "affiliates"));
+          const newAffiliate = {
+            id: affRef.id,
+            name: name || "Arthur Olimpio",
+            email: email,
+            code: "APICE",
+            commissionRate: 30,
+            status: "active",
+            pixKey: "",
+            pixType: "email",
+            metrics: {
+              visits: 0,
+              uniqueVisitors: 0,
+              signups: 0,
+              subscriptions: 0,
+              totalRevenue: 0,
+              totalCommission: 0
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          await setDoc(affRef, newAffiliate);
+          snap = await getDocs(q);
+        } else {
+          return res.status(403).json({ error: "Acesso restrito. Este e-mail não possui cadastro de afiliado." });
+        }
       }
 
       const affDoc = snap.docs[0];
@@ -740,13 +826,14 @@ export function setupAffiliateRoutes(
   portalRouter.post('/pix', async (req, res) => {
     try {
       const user = (req as any).user;
-      if (!user || !user.email) {
+      const db = getDb();
+      const { email } = await getAuthenticatedUserEmailAndRole(user, db);
+
+      if (!email) {
         return res.status(401).json({ error: "Não autorizado" });
       }
 
       const { pixKey, pixType } = req.body;
-      const email = user.email.toLowerCase().trim();
-      const db = getDb();
 
       const q = query(
         collection(db, "affiliates"), 
@@ -959,6 +1046,184 @@ export function setupAffiliateRoutes(
     } catch (err: any) {
       console.error("[AFFILIATE-CREATE-ERROR]", err);
       res.status(500).json({ error: err.message || 'Erro ao criar afiliado' });
+    }
+  });
+
+  // Ativar painel de afiliado diretamente por e-mail ou conta de usuário
+  adminAffRouter.post('/activate-by-email', async (req, res) => {
+    try {
+      const { email, name, code, commissionRate, status } = req.body;
+      const cleanEmail = String(email || '').trim().toLowerCase();
+      if (!cleanEmail || !cleanEmail.includes('@')) {
+        return res.status(400).json({ error: 'E-mail válido é obrigatório' });
+      }
+
+      const db = getDb();
+      const nowIso = new Date().toISOString();
+
+      // 1. Procurar conta na coleção users
+      const uQuery = query(collection(db, "users"), where("email", "==", cleanEmail), limit(1));
+      const uSnap = await getDocs(uQuery);
+      const userDoc = !uSnap.empty ? uSnap.docs[0] : null;
+      const userData = userDoc ? userDoc.data() : null;
+      const finalName = String(name || userData?.displayName || userData?.name || cleanEmail.split('@')[0]).trim();
+
+      // 2. Verificar se já existe registro de afiliado com esse e-mail
+      const affQuery = query(collection(db, "affiliates"), where("email", "==", cleanEmail), limit(1));
+      const affSnap = await getDocs(affQuery);
+
+      if (!affSnap.empty) {
+        // Já existe: atualizar e ativar
+        const targetDoc = affSnap.docs[0];
+        const currentData = targetDoc.data();
+        const targetStatus = status || 'active';
+
+        const updates: any = {
+          status: targetStatus,
+          name: finalName,
+          updatedAt: nowIso
+        };
+
+        if (typeof commissionRate === 'number') {
+          updates.commissionRate = commissionRate;
+        }
+
+        if (code) {
+          const cleanCode = String(code).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+          if (cleanCode && cleanCode !== currentData.code) {
+            // Verificar unicidade
+            const codeCheck = await getDocs(query(collection(db, "affiliates"), where("code", "==", cleanCode), limit(1)));
+            if (!codeCheck.empty && codeCheck.docs[0].id !== targetDoc.id) {
+              return res.status(400).json({ error: `O código "${cleanCode}" já está em uso por outro afiliado.` });
+            }
+            updates.code = cleanCode;
+          }
+        }
+
+        await updateDoc(doc(db, "affiliates", targetDoc.id), updates);
+        const updatedAff = { ...currentData, ...updates, id: targetDoc.id };
+
+        // Sincronizar status no usuário
+        if (userDoc) {
+          await setDoc(doc(db, "users", userDoc.id), {
+            isAffiliate: targetStatus === 'active',
+            affiliateCode: updatedAff.code
+          }, { merge: true });
+        }
+
+        return res.json({
+          success: true,
+          isNew: false,
+          affiliate: updatedAff,
+          message: targetStatus === 'active' 
+            ? `Painel de afiliado ativado com sucesso para ${cleanEmail}!` 
+            : `Painel de afiliado desativado para ${cleanEmail}.`
+        });
+      }
+
+      // 3. Não existe: Criar novo registro de afiliado
+      let cleanCode = code ? String(code).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') : '';
+      if (!cleanCode) {
+        const rawPrefix = finalName.split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const prefix = rawPrefix.length >= 3 ? rawPrefix.substring(0, 5) : 'APICE';
+        const randomSuffix = Math.floor(100 + Math.random() * 900);
+        cleanCode = `${prefix}${randomSuffix}`;
+      }
+
+      // Verificar unicidade do código
+      const codeCheck = await getDocs(query(collection(db, "affiliates"), where("code", "==", cleanCode), limit(1)));
+      if (!codeCheck.empty) {
+        cleanCode = `${cleanCode}${Math.floor(10 + Math.random() * 90)}`;
+      }
+
+      const affRef = doc(collection(db, "affiliates"));
+      const newAffiliate = {
+        id: affRef.id,
+        name: finalName,
+        email: cleanEmail,
+        code: cleanCode,
+        status: status || 'active',
+        commissionRate: typeof commissionRate === 'number' ? commissionRate : 30,
+        pixKey: '',
+        pixType: 'email',
+        metrics: {
+          visits: 0,
+          uniqueVisitors: 0,
+          signups: 0,
+          logins: 0,
+          checkoutsStarted: 0,
+          subscriptions: 0,
+          totalRevenue: 0,
+          totalCommission: 0
+        },
+        createdAt: nowIso,
+        updatedAt: nowIso
+      };
+
+      await setDoc(affRef, newAffiliate);
+
+      // Sincronizar com documento do usuário se existir
+      if (userDoc) {
+        await setDoc(doc(db, "users", userDoc.id), {
+          isAffiliate: true,
+          affiliateCode: cleanCode
+        }, { merge: true });
+      }
+
+      res.json({
+        success: true,
+        isNew: true,
+        affiliate: newAffiliate,
+        message: `Painel de afiliado ativado com sucesso para ${cleanEmail}! Código: ${cleanCode}`
+      });
+    } catch (err: any) {
+      console.error("[AFFILIATE-ACTIVATE-BY-EMAIL-ERROR]", err);
+      res.status(500).json({ error: err.message || 'Erro ao ativar afiliado por e-mail' });
+    }
+  });
+
+  // Busca rápida de usuários para ativação de afiliado
+  adminAffRouter.get('/search-users', async (req, res) => {
+    try {
+      const q = String(req.query.q || '').trim().toLowerCase();
+      const db = getDb();
+
+      const [usersSnap, affSnap] = await Promise.all([
+        getDocs(query(collection(db, "users"), limit(300))),
+        getDocs(collection(db, "affiliates"))
+      ]);
+
+      const affMap = new Map<string, any>();
+      affSnap.docs.forEach(d => {
+        const data = d.data();
+        if (data.email) affMap.set(data.email.toLowerCase().trim(), { id: d.id, ...data });
+      });
+
+      const results: any[] = [];
+      usersSnap.docs.forEach(doc => {
+        const u = doc.data();
+        const email = (u.email || '').toLowerCase().trim();
+        const name = u.displayName || u.name || '';
+        
+        if (!q || email.includes(q) || name.toLowerCase().includes(q)) {
+          const aff = affMap.get(email);
+          results.push({
+            uid: doc.id,
+            name: name || 'Sem nome',
+            email,
+            planStatus: u.planStatus || 'free',
+            isAffiliate: aff ? aff.status === 'active' : false,
+            affiliateStatus: aff ? aff.status : 'unregistered',
+            affiliateCode: aff?.code || null,
+            affiliateId: aff?.id || null,
+            commissionRate: aff?.commissionRate || 30
+          });
+        }
+      });
+
+      res.json(results.slice(0, 30));
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 

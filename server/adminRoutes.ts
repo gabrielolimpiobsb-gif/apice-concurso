@@ -321,7 +321,24 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
     try {
       const db = getDb();
       
-      const usersSnap = await getDocs(query(collection(db, "users"), limit(500)));
+      const [usersSnap, affSnap] = await Promise.all([
+        getDocs(query(collection(db, "users"), limit(500))),
+        getDocs(collection(db, "affiliates"))
+      ]);
+
+      const affiliateMap = new Map<string, any>();
+      affSnap.docs.forEach(doc => {
+        const d = doc.data();
+        if (d.email) {
+          affiliateMap.set(d.email.toLowerCase().trim(), {
+            id: doc.id,
+            code: d.code,
+            status: d.status,
+            commissionRate: d.commissionRate || 30
+          });
+        }
+      });
+
       const users = [];
 
       usersSnap.docs.forEach(doc => {
@@ -329,6 +346,8 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
         const data = doc.data();
 
         let createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null);
+        const userEmail = (data.email || '').toLowerCase().trim();
+        const aff = affiliateMap.get(userEmail) || null;
 
         users.push({
           uid: uid,
@@ -339,7 +358,14 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
           createdAt: createdAt,
           role: data.role || 'user',
           stripeCustomerId: data.stripeCustomerId || null,
-          stripeSubscriptionId: data.stripeSubscriptionId || null
+          stripeSubscriptionId: data.stripeSubscriptionId || null,
+          affiliate: aff ? {
+            id: aff.id,
+            code: aff.code,
+            status: aff.status,
+            isAffiliate: aff.status === 'active',
+            commissionRate: aff.commissionRate
+          } : null
         });
       });
 
@@ -428,6 +454,105 @@ export function setupAdminRoutes(app: express.Application, authenticate: express
     } catch(e) {
       console.error("[ADMIN] Error removing premium:", e);
       res.status(500).json({ error: "Internal Server Error", details: String(e) });
+    }
+  });
+
+  // Ativar / desativar painel de afiliado diretamente pelo UID do usuário
+  adminRouter.post('/users/:uid/toggle-affiliate', async (req, res) => {
+    try {
+      const { uid } = req.params;
+      const { customCode, commissionRate } = req.body || {};
+      const db = getDb();
+
+      const userDoc = await getDoc(doc(db, "users", uid));
+      if (!userDoc.exists()) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const userData = userDoc.data();
+      const email = (userData.email || '').toLowerCase().trim();
+      if (!email) {
+        return res.status(400).json({ error: "Usuário não possui e-mail válido cadastrado" });
+      }
+
+      const name = userData.displayName || userData.name || email.split('@')[0];
+
+      // Verificar se já existe documento na coleção de afiliados
+      const affQuery = query(collection(db, "affiliates"), where("email", "==", email), limit(1));
+      const affSnap = await getDocs(affQuery);
+
+      let affiliateData: any;
+      let newStatus = 'active';
+
+      if (!affSnap.empty) {
+        const affDoc = affSnap.docs[0];
+        const existing = affDoc.data();
+        newStatus = existing.status === 'active' ? 'inactive' : 'active';
+        const updates: any = {
+          status: newStatus,
+          updatedAt: new Date().toISOString()
+        };
+        if (customCode) updates.code = String(customCode).trim().toUpperCase();
+        if (typeof commissionRate === 'number') updates.commissionRate = commissionRate;
+
+        await updateDoc(doc(db, "affiliates", affDoc.id), updates);
+        affiliateData = { ...existing, ...updates, id: affDoc.id };
+      } else {
+        // Criar novo registro de afiliado
+        let code = customCode ? String(customCode).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') : '';
+        if (!code) {
+          const rawName = name.split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const prefix = rawName.length >= 3 ? rawName.substring(0, 5) : 'APICE';
+          const randomSuffix = Math.floor(100 + Math.random() * 900);
+          code = `${prefix}${randomSuffix}`;
+        }
+
+        const affRef = doc(collection(db, "affiliates"));
+        const nowIso = new Date().toISOString();
+        affiliateData = {
+          id: affRef.id,
+          name,
+          email,
+          code,
+          commissionRate: typeof commissionRate === 'number' ? commissionRate : 30,
+          status: 'active',
+          pixKey: '',
+          pixType: 'email',
+          metrics: {
+            visits: 0,
+            uniqueVisitors: 0,
+            signups: 0,
+            logins: 0,
+            checkoutsStarted: 0,
+            subscriptions: 0,
+            totalRevenue: 0,
+            totalCommission: 0
+          },
+          createdAt: nowIso,
+          updatedAt: nowIso
+        };
+        await setDoc(affRef, affiliateData);
+        newStatus = 'active';
+      }
+
+      // Sincronizar campo no usuário
+      await setDoc(doc(db, "users", uid), {
+        isAffiliate: newStatus === 'active',
+        affiliateCode: affiliateData.code
+      }, { merge: true });
+
+      res.json({
+        success: true,
+        affiliate: affiliateData,
+        isAffiliate: newStatus === 'active',
+        status: newStatus,
+        message: newStatus === 'active' 
+          ? `Painel de afiliado ativado com sucesso! Código: ${affiliateData.code}` 
+          : 'Painel de afiliado desativado.'
+      });
+    } catch (e: any) {
+      console.error("[ADMIN-TOGGLE-USER-AFFILIATE-ERROR]", e);
+      res.status(500).json({ error: e.message || "Erro ao alternar status de afiliado" });
     }
   });
 

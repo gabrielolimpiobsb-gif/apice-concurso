@@ -275,8 +275,14 @@ export const affiliateClientService = {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Falha ao carregar painel do afiliado');
+      let errorMsg = '';
+      try {
+        const err = await res.json();
+        errorMsg = err.error || err.message || '';
+      } catch (e) {}
+      throw new Error(errorMsg || (res.status === 403 
+        ? 'Acesso restrito. Seu e-mail não possui cadastro de afiliado ativo.'
+        : `Falha ao carregar painel do afiliado (${res.status})`));
     }
     return await res.json();
   },
@@ -291,9 +297,63 @@ export const affiliateClientService = {
       body: JSON.stringify({ pixKey, pixType })
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Erro ao salvar chave PIX');
+      let errorMsg = '';
+      try {
+        const err = await res.json();
+        errorMsg = err.error || err.message || '';
+      } catch (e) {}
+      throw new Error(errorMsg || 'Erro ao salvar chave PIX');
     }
     return await res.json();
+  },
+
+  // Métodos Administrativos: Ativação de Afiliado por E-mail / Conta
+  adminActivateByEmail: async (
+    token: string, 
+    data: { email: string; name?: string; code?: string; commissionRate?: number; status?: 'active' | 'inactive' }
+  ): Promise<any> => {
+    const res = await fetch('/api/admin/affiliates/activate-by-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.error || 'Falha ao ativar afiliado por e-mail');
+    }
+    return result;
+  },
+
+  adminSearchUsers: async (token: string, query: string): Promise<any[]> => {
+    const res = await fetch(`/api/admin/affiliates/search-users?q=${encodeURIComponent(query)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      return [];
+    }
+    return await res.json();
+  },
+
+  adminToggleUserAffiliate: async (
+    token: string, 
+    uid: string, 
+    options?: { customCode?: string; commissionRate?: number }
+  ): Promise<any> => {
+    const res = await fetch(`/api/admin/users/${uid}/toggle-affiliate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(options || {})
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.error || 'Falha ao alterar status de afiliado do usuário');
+    }
+    return result;
   }
 };

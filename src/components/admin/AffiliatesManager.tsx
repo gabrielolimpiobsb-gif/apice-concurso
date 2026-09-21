@@ -25,7 +25,8 @@ import {
   Download,
   Calendar,
   Layers,
-  Sparkles
+  Sparkles,
+  UserCheck
 } from 'lucide-react';
 import { Affiliate, AffiliateAttribution, AffiliateEvent, AffiliateSubscription } from '../../types/affiliate';
 import { cn } from '../../lib/utils';
@@ -50,6 +51,19 @@ export function AffiliatesManager() {
   const [newCode, setNewCode] = useState('');
   const [newCommissionRate, setNewCommissionRate] = useState<number>(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Modal & Ativação de Painel por E-mail / Conta
+  const [showActivateByEmailModal, setShowActivateByEmailModal] = useState(false);
+  const [searchUserQuery, setSearchUserQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [selectedUserAccount, setSelectedUserAccount] = useState<any | null>(null);
+  const [activationEmail, setActivationEmail] = useState('');
+  const [activationName, setActivationName] = useState('');
+  const [activationCode, setActivationCode] = useState('');
+  const [activationRate, setActivationRate] = useState<number>(30);
+  const [activationStatus, setActivationStatus] = useState<'active' | 'inactive'>('active');
+  const [isSubmittingActivation, setIsSubmittingActivation] = useState(false);
 
   // Modal Details / Journey
   const [selectedAffiliate, setSelectedAffiliate] = useState<Affiliate | null>(null);
@@ -121,6 +135,91 @@ export function AffiliatesManager() {
   useEffect(() => {
     loadData();
   }, [user]);
+
+  // Busca rápida de contas cadastradas para ativar afiliado
+  useEffect(() => {
+    if (!showActivateByEmailModal) return;
+    const q = searchUserQuery.trim();
+    const timeout = setTimeout(async () => {
+      if (!user) return;
+      setIsSearchingUsers(true);
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/admin/affiliates/search-users?q=${encodeURIComponent(q)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const list = await res.json();
+          setUserSearchResults(list);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsSearchingUsers(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [searchUserQuery, showActivateByEmailModal, user]);
+
+  const handleSelectUserAccount = (acc: any) => {
+    setSelectedUserAccount(acc);
+    setActivationEmail(acc.email);
+    setActivationName(acc.name && acc.name !== 'Sem nome' ? acc.name : '');
+    if (acc.affiliateCode) {
+      setActivationCode(acc.affiliateCode);
+    } else {
+      const rawName = (acc.name || 'USER').split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const prefix = rawName.length >= 3 ? rawName.substring(0, 5) : 'APICE';
+      setActivationCode(`${prefix}${Math.floor(100 + Math.random() * 900)}`);
+    }
+    setActivationRate(acc.commissionRate || 30);
+    setActivationStatus(acc.isAffiliate ? 'active' : 'active');
+  };
+
+  const handleActivateByEmail = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!user || !activationEmail.trim()) return;
+
+    setIsSubmittingActivation(true);
+    setError(null);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/admin/affiliates/activate-by-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          email: activationEmail.trim().toLowerCase(),
+          name: activationName.trim() || undefined,
+          code: activationCode.trim().toUpperCase() || undefined,
+          commissionRate: Number(activationRate) || 30,
+          status: activationStatus
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao ativar afiliado por e-mail');
+      }
+
+      setSuccessMsg(data.message || `Painel de afiliado ativado com sucesso para ${activationEmail}!`);
+      setTimeout(() => setSuccessMsg(null), 5000);
+      setShowActivateByEmailModal(false);
+      setSelectedUserAccount(null);
+      setActivationEmail('');
+      setActivationName('');
+      setActivationCode('');
+      setSearchUserQuery('');
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao ativar afiliado por e-mail');
+    } finally {
+      setIsSubmittingActivation(false);
+    }
+  };
 
   const handleCopyLink = (code: string) => {
     const url = `${getBaseUrl()}/afiliado/${code}`;
@@ -341,6 +440,21 @@ export function AffiliatesManager() {
           </button>
 
           <button
+            onClick={() => {
+              setSelectedUserAccount(null);
+              setActivationEmail('');
+              setActivationName('');
+              setActivationCode('');
+              setSearchUserQuery('');
+              setShowActivateByEmailModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 transition-all active:scale-95 shadow-sm"
+          >
+            <UserCheck size={18} className="text-purple-400" />
+            Ativar por E-mail / Conta
+          </button>
+
+          <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/25 transition-all"
           >
@@ -465,6 +579,41 @@ export function AffiliatesManager() {
       {/* SUBTAB 1: LISTA DE AFILIADOS */}
       {activeSubTab === 'list' && (
         <div className="space-y-4">
+          {/* Card de Ativação Rápida por E-mail / Conta */}
+          <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-purple-900/30 border border-purple-500/30 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-purple-950/20">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
+                <UserCheck size={22} />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  Ativação de Painel por E-mail / Conta de Usuário
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                    Ativação Direta
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Selecione uma conta existente ou insira o e-mail de um parceiro para liberar o acesso imediato ao painel de afiliado e gerar seu link exclusivo.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedUserAccount(null);
+                setActivationEmail('');
+                setActivationName('');
+                setActivationCode('');
+                setSearchUserQuery('');
+                setShowActivateByEmailModal(true);
+              }}
+              className="whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-600/30 transition-all flex items-center gap-2 active:scale-95 shrink-0 cursor-pointer"
+            >
+              <UserCheck size={16} />
+              Ativar por E-mail / Conta
+            </button>
+          </div>
+
           {/* Controls Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/[0.02] border border-white/10 p-3 rounded-2xl">
             <div className="relative w-full sm:w-80">
@@ -1027,6 +1176,216 @@ export function AffiliatesManager() {
                   className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white disabled:opacity-50 transition-all shadow-lg shadow-purple-600/25"
                 >
                   {isSubmitting ? 'Cadastrando...' : '+ Criar Afiliado'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ATIVAR PAINEL DE AFILIADO POR E-MAIL / CONTA */}
+      {showActivateByEmailModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0f1d33] border border-purple-500/30 rounded-3xl max-w-lg w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-purple-300 flex items-center justify-center">
+                  <UserCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Ativar Painel de Afiliado</h3>
+                  <p className="text-xs text-slate-400">Ativação por e-mail ou conta de aluno cadastrado</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowActivateByEmailModal(false);
+                  setSelectedUserAccount(null);
+                }}
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleActivateByEmail} className="space-y-4">
+              {/* Busca de Conta de Usuário Existente */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Buscar Conta de Usuário Cadastrado
+                </label>
+                <div className="relative">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchUserQuery}
+                    onChange={(e) => setSearchUserQuery(e.target.value)}
+                    placeholder="Digite nome ou e-mail para buscar..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                  {isSearchingUsers && (
+                    <RefreshCw size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-purple-400" />
+                  )}
+                </div>
+
+                {/* Dropdown de Resultados da Busca */}
+                {userSearchResults.length > 0 && (
+                  <div className="mt-2 max-h-48 overflow-y-auto bg-[#0a1424] border border-white/10 rounded-xl divide-y divide-white/5 shadow-xl">
+                    {userSearchResults.map((acc, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectUserAccount(acc)}
+                        className={cn(
+                          "w-full px-3.5 py-2 text-left text-xs transition-colors flex items-center justify-between hover:bg-white/5",
+                          selectedUserAccount?.email === acc.email ? "bg-purple-500/15 border-l-2 border-purple-500" : ""
+                        )}
+                      >
+                        <div>
+                          <div className="font-semibold text-white">{acc.name}</div>
+                          <div className="text-slate-400 font-mono text-[11px]">{acc.email}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-white/5 text-slate-300">
+                            {acc.planStatus}
+                          </span>
+                          {acc.isAffiliate ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              Ativo ({acc.affiliateCode})
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-slate-500/20 text-slate-400">
+                              Sem painel
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Card da Conta Selecionada */}
+              {selectedUserAccount && (
+                <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/25 text-xs space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-purple-300 font-semibold">Conta Selecionada:</span>
+                    <span className="text-slate-400">{selectedUserAccount.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center font-mono text-[11px]">
+                    <span className="text-slate-400">Status no Programa:</span>
+                    <span className={selectedUserAccount.isAffiliate ? "text-emerald-400 font-bold" : "text-amber-400"}>
+                      {selectedUserAccount.isAffiliate ? `Afiliado Ativo (Código: ${selectedUserAccount.affiliateCode})` : 'Ainda não é afiliado'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* E-mail da Conta / Afiliado */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  E-mail da Conta *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={activationEmail}
+                  onChange={(e) => setActivationEmail(e.target.value)}
+                  placeholder="usuario@exemplo.com"
+                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              {/* Nome do Afiliado */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Nome do Afiliado / Parceiro
+                </label>
+                <input
+                  type="text"
+                  value={activationName}
+                  onChange={(e) => setActivationName(e.target.value)}
+                  placeholder="Ex: Gabriel Santos ou Curso Parceiro"
+                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              {/* Código Único */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Código de Indicação Exclusivo *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prefix = activationName ? activationName.split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 5) : 'APICE';
+                      setActivationCode(`${prefix || 'APICE'}${Math.floor(100 + Math.random() * 900)}`);
+                    }}
+                    className="text-xs text-purple-400 hover:text-purple-300 font-medium"
+                  >
+                    Gerar código inteligente
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={activationCode}
+                  onChange={(e) => setActivationCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
+                  placeholder="Ex: GABRIEL10 ou 492019"
+                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-purple-500 uppercase"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Link exclusivo: <span className="text-purple-300 font-mono">{getBaseUrl()}/afiliado/{activationCode || 'CODIGO'}</span>
+                </p>
+              </div>
+
+              {/* Comissão e Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                    Comissão (%) *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    required
+                    value={activationRate}
+                    onChange={(e) => setActivationRate(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white font-mono focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                    Status do Painel
+                  </label>
+                  <select
+                    value={activationStatus}
+                    onChange={(e: any) => setActivationStatus(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-300 focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="active" className="bg-[#0a192f] text-white">Ativo (Liberado)</option>
+                    <option value="inactive" className="bg-[#0a192f] text-white">Inativo (Bloqueado)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowActivateByEmailModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingActivation || !activationEmail.trim()}
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white disabled:opacity-50 transition-all shadow-lg shadow-purple-600/25 cursor-pointer flex items-center gap-2"
+                >
+                  <UserCheck size={16} />
+                  {isSubmittingActivation ? 'Ativando...' : 'Salvar e Ativar Painel'}
                 </button>
               </div>
             </form>

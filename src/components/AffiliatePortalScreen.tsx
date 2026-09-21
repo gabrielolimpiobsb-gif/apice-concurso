@@ -69,8 +69,8 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
         setPixType(res.affiliate.pixType);
       }
     } catch (err: any) {
-      console.error('[AFFILIATE-PORTAL] Error loading:', err);
-      setError(err.message || 'Não foi possível carregar seu painel de afiliado.');
+      console.warn('[AFFILIATE-PORTAL] Notice:', err?.message || err);
+      setError(err.message || 'Seu e-mail não possui um cadastro de afiliado ativo e validado pelo administrador.');
     } finally {
       setLoading(false);
     }
@@ -120,6 +120,28 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
       <div className="min-h-screen bg-[#01142e] text-white flex flex-col items-center justify-center p-6">
         <div className="w-12 h-12 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-slate-400 text-sm font-medium">Validando credenciais de afiliado com o servidor...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#01142e] text-white flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-[#0a1f3d] border border-white/10 rounded-2xl p-8 text-center shadow-2xl">
+          <div className="w-16 h-16 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-5 text-purple-400">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Portal do Afiliado</h2>
+          <p className="text-sm text-slate-400 leading-relaxed mb-6">
+            Você precisa estar conectado à sua conta para acessar o seu painel de afiliado.
+          </p>
+          <button
+            onClick={() => onNavigate('home')}
+            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors cursor-pointer text-sm"
+          >
+            Fazer Login / Voltar
+          </button>
+        </div>
       </div>
     );
   }
