@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile, signInAnonymously } from 'firebase/auth';
 import { auth } from './firebase';
 import { firebaseStorageService } from '../services/firebaseStorageService';
+import { affiliateClientService } from '../services/affiliateClientService';
 
 interface AuthContextType {
   user: User | null;
@@ -28,6 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (firebaseUser) {
         // Ensure user document exists in Firestore on every state change if user is present
         firebaseStorageService.ensureUserExists().catch(e => console.error("Critical: Failed to sync user document", e));
+        // Track affiliate login (deduplicated daily on server)
+        affiliateClientService.trackLogin(firebaseUser.uid).catch(e => console.warn(e));
       } else {
         setGoogleToken(null);
       }
@@ -44,6 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await signInWithPopup(auth, provider);
       if (result.user) {
         firebaseStorageService.ensureUserExists().catch(e => console.error(e));
+        // Track affiliate signup / conversion for Google signin
+        affiliateClientService.trackSignup(result.user.uid, result.user.email || '', result.user.displayName || '').catch(e => console.warn(e));
       }
     } catch (error: any) {
       console.error("Login failed", error);
@@ -126,6 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, { merge: true });
       }
       await firebaseStorageService.ensureUserExists().catch(e => console.error(e));
+      // Track affiliate signup attribution
+      affiliateClientService.trackSignup(newUser.uid, email, name).catch(e => console.warn(e));
     } catch (error) {
       console.error("Registration failed", error);
       throw error;

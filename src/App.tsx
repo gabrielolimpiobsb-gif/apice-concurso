@@ -13,6 +13,7 @@ import { AnalyticsScreen } from './components/AnalyticsScreen';
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { BlogScreen } from "./components/BlogScreen";
 import { SalesScreen } from "./components/SalesScreen";
+import { PdfCoursesScreen } from "./components/PdfCoursesScreen";
 import { storageService } from './services/storageService';
 import { firebaseStorageService } from './services/firebaseStorageService';
 import { useAuth } from './lib/AuthContext';
@@ -27,10 +28,11 @@ import { cn } from './lib/utils';
 import { getRank, RankConfig } from './lib/ranks';
 import { PremiumSuccessModal } from './components/PremiumSuccessModal';
 import { Logo } from './components/Logo';
+import { affiliateClientService } from './services/affiliateClientService';
 
 import confetti from 'canvas-confetti';
 
-export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal';
+export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal' | 'pdf-courses';
 
 
 export const tabToUrlMap: Record<NavTab, string> = {
@@ -47,7 +49,8 @@ export const tabToUrlMap: Record<NavTab, string> = {
   'admin': '/admin',
   'blog': '/blog',
   'sales-anual': '/plano-anual',
-  'sales-mensal': '/plano-mensal'
+  'sales-mensal': '/plano-mensal',
+  'pdf-courses': '/cursos-pdf'
 };
 
 export const urlToTabMap: Record<string, NavTab> = Object.entries(tabToUrlMap).reduce((acc, [tab, url]) => {
@@ -72,6 +75,13 @@ function getTabInfoFromUrl(): { tab: NavTab, params?: any } {
      let packId = `pack_${slug}`;
      if (slug === 'prf') packId = 'pack_prf_agente';
      return { tab: 'packs-store', params: { viewingPack: packId } };
+  }
+  if (path.startsWith('/cursos-pdf-')) {
+     const courseId = path.replace('/cursos-pdf-', '');
+     return { tab: 'pdf-courses', params: { courseId } };
+  }
+  if (path.startsWith('/afiliado')) {
+     return { tab: 'home' };
   }
   if (path.startsWith('/questoes/')) { return { tab: 'seo-questions', params: { slug: path.replace('/questoes/', '') } }; }
   return { tab: urlToTabMap[path] || 'home' };
@@ -161,6 +171,20 @@ function MainApp() {
 
   const [rankUpNotification, setRankUpNotification] = useState<RankConfig | null>(null);
   const [showPremiumSuccessModal, setShowPremiumSuccessModal] = useState(false);
+  const [affiliateBanner, setAffiliateBanner] = useState<{ code: string; name: string } | null>(null);
+
+  useEffect(() => {
+    // Check affiliate link in URL
+    const affCode = affiliateClientService.parseAffiliateCodeFromPath(window.location.pathname);
+    if (affCode) {
+      affiliateClientService.trackVisit(affCode).then((res) => {
+        if (res && res.success && res.affiliate) {
+          setAffiliateBanner({ code: res.affiliate.code, name: res.affiliate.name });
+          window.history.replaceState({ isAppNav: true, tab: 'home' }, '', '/');
+        }
+      }).catch(e => console.warn("[AFFILIATE] Visit error:", e));
+    }
+  }, []);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -728,6 +752,14 @@ function MainApp() {
       case 'blog':
         return <BlogScreen onNavigate={handleTabChange} initialPostId={targetBlogId} />;
 
+      case 'pdf-courses':
+        return (
+          <PdfCoursesScreen 
+            onNavigate={handleTabChange} 
+            initialCourseId={navHistory[navHistory.length - 1]?.params?.courseId} 
+          />
+        );
+
       case 'sales-anual':
       case 'sales-mensal':
         return (
@@ -808,6 +840,32 @@ function MainApp() {
       {showPremiumSuccessModal && (
         <PremiumSuccessModal onClose={() => setShowPremiumSuccessModal(false)} />
       )}
+
+      {/* Affiliate Welcome Toast/Notification */}
+      <AnimatePresence>
+        {affiliateBanner && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] max-w-lg w-[92%] bg-gradient-to-r from-purple-900 via-indigo-900 to-[#0a192f] text-white px-4 py-3 rounded-2xl shadow-2xl border border-purple-500/40 flex items-center justify-between gap-3 text-xs sm:text-sm backdrop-blur-md"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+              <span>
+                Você está acessando pelo parceiro oficial <strong className="text-purple-300">{affiliateBanner.name}</strong> (<span className="font-mono">{affiliateBanner.code}</span>).
+              </span>
+            </div>
+            <button
+              onClick={() => setAffiliateBanner(null)}
+              className="text-white/70 hover:text-white p-1 rounded-lg shrink-0 transition-colors"
+              title="Fechar"
+            >
+              <XCircle size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <main className="relative z-20 flex-1 flex flex-col overflow-hidden">
           <div className={cn("w-full h-full flex flex-col overflow-hidden relative")}>
             {renderContent()}

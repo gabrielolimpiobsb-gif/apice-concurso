@@ -1,0 +1,1009 @@
+import express from 'express';
+import { 
+  doc, 
+  getDoc, 
+  collection, 
+  getDocs, 
+  setDoc, 
+  updateDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  serverTimestamp,
+  writeBatch
+} from 'firebase/firestore';
+
+export interface RecordConversionOptions {
+  affiliateId?: string;
+  affiliateCode?: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  plan: string;
+  amount: number;
+  stripeSessionId?: string;
+  stripeSubscriptionId?: string;
+  stripeCustomerId?: string;
+  status?: string;
+}
+
+export async function recordAffiliateSubscription(
+  db: any, 
+  options: RecordConversionOptions
+): Promise<{ success: boolean; commission: number; affiliateId: string | null }> {
+  try {
+    let affiliateId = options.affiliateId;
+    let affiliateCode = options.affiliateCode;
+
+    // 1. If affiliateId not provided, check user's document
+    if (!affiliateId && options.userId) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", options.userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          affiliateId = userData.affiliateId;
+          affiliateCode = userData.affiliateCode || affiliateCode;
+        }
+      } catch (err) {
+        console.warn("[AFFILIATE-CONVERSION] Could not fetch user doc:", err);
+      }
+    }
+
+    if (!affiliateId) {
+      return { success: false, commission: 0, affiliateId: null };
+    }
+
+    // 2. Fetch affiliate details
+    const affRef = doc(db, "affiliates", affiliateId);
+    const affSnap = await getDoc(affRef);
+    if (!affSnap.exists()) {
+      console.warn(`[AFFILIATE-CONVERSION] Affiliate ${affiliateId} not found`);
+      return { success: false, commission: 0, affiliateId: null };
+    }
+
+    const affData = affSnap.data() as any;
+    affiliateCode = affiliateCode || affData.code;
+    const commissionRate = typeof affData.commissionRate === 'number' ? affData.commissionRate : 30;
+    const commission = Math.round((options.amount * (commissionRate / 100)) * 100) / 100;
+
+    // 3. Deduplication check: Has this stripeSessionId or subscription already been credited?
+    const subDocId = options.stripeSessionId || options.stripeSubscriptionId || `sub_${Date.now()}_${options.userId}`;
+    const subRef = doc(db, "affiliate_subscriptions", subDocId);
+    const existingSub = await getDoc(subRef);
+    
+    if (existingSub.exists() && existingSub.data()?.status === 'paid') {
+      console.log(`[AFFILIATE-CONVERSION] Subscription ${subDocId} already processed.`);
+      return { success: true, commission, affiliateId };
+    }
+
+    const nowIso = new Date().toISOString();
+
+    // 4. Save Affiliate Subscription Record
+    await setDoc(subRef, {
+      id: subDocId,
+      affiliateId,
+      affiliateCode,
+      userId: options.userId,
+      userEmail: options.userEmail || '',
+      userName: options.userName || '',
+      plan: options.plan || 'premium',
+      amount: options.amount,
+      commission,
+      currency: 'BRL',
+      stripeCustomerId: options.stripeCustomerId || null,
+      stripeSubscriptionId: options.stripeSubscriptionId || null,
+      stripeSessionId: options.stripeSessionId || null,
+      status: options.status || 'paid',
+      createdAt: nowIso,
+      updatedAt: nowIso
+    }, { merge: true });
+
+    // 5. Log event in affiliate_events
+    const eventRef = doc(collection(db, "affiliate_events"));
+    await setDoc(eventRef, {
+      id: eventRef.id,
+      affiliateId,
+      affiliateCode,
+      visitorId: '',
+      userId: options.userId,
+      eventType: 'subscription_created',
+      eventDate: nowIso,
+      metadata: {
+        plan: options.plan,
+        amount: options.amount,
+        commission,
+        stripeSessionId: options.stripeSessionId,
+        userEmail: options.userEmail
+      },
+      createdAt: nowIso,
+      timestamp: Date.now()
+    });
+
+    // 6. Update affiliate aggregate metrics
+    const currentMetrics = affData.metrics || {};
+    const newMetrics = {
+      ...currentMetrics,
+      subscriptions: (currentMetrics.subscriptions || 0) + 1,
+      totalRevenue: Math.round(((currentMetrics.totalRevenue || 0) + options.amount) * 100) / 100,
+      totalCommission: Math.round(((currentMetrics.totalCommission || 0) + commission) * 100) / 100
+    };
+
+    await updateDoc(affRef, {
+      metrics: newMetrics,
+      updatedAt: nowIso
+    });
+
+    console.log(`[AFFILIATE-CONVERSION] Successfully attributed R$ ${options.amount} to affiliate ${affData.name} (${affiliateCode}). Commission: R$ ${commission}`);
+    return { success: true, commission, affiliateId };
+  } catch (err) {
+    console.error("[AFFILIATE-CONVERSION-ERROR]", err);
+    return { success: false, commission: 0, affiliateId: null };
+  }
+}
+
+export function setupAffiliateRoutes(
+  app: express.Application, 
+  authenticate: express.RequestHandler, 
+  getDb: () => any
+) {
+  const router = express.Router();
+
+  // Helper to fetch global config
+  async function getAffiliateConfig(db: any) {
+    try {
+      const snap = await getDoc(doc(db, "affiliate_config", "settings"));
+      if (snap.exists()) {
+        return snap.data();
+      }
+    } catch (e) {}
+    return {
+      attributionWindowDays: 90,
+      attributionModel: 'first_touch',
+      defaultCommissionRate: 30
+    };
+  }
+
+  // ==========================================
+  // PUBLIC TRACKING ENDPOINTS
+  // ==========================================
+
+  // 1. Track Visit / Click
+  router.post('/track-visit', async (req, res) => {
+    try {
+      const {
+        code,
+        visitorId,
+        landingPage,
+        referrer,
+        device,
+        browser,
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        utmContent,
+        utmTerm
+      } = req.body;
+
+      if (!code || !visitorId) {
+        return res.status(400).json({ error: 'Código e visitorId são obrigatórios' });
+      }
+
+      const db = getDb();
+      const cleanCode = String(code).trim().toUpperCase();
+
+      // Find affiliate by code
+      const affQuery = query(collection(db, "affiliates"), where("code", "==", cleanCode), limit(1));
+      const affSnap = await getDocs(affQuery);
+
+      if (affSnap.empty) {
+        // Try case-insensitive / lowercase search
+        const affLowerQuery = query(collection(db, "affiliates"), where("code", "==", String(code).trim().toLowerCase()), limit(1));
+        const affLowerSnap = await getDocs(affLowerQuery);
+        if (affLowerSnap.empty) {
+          return res.status(404).json({ error: 'Afiliado não encontrado' });
+        }
+      }
+
+      const targetDoc = affSnap.empty ? (await getDocs(query(collection(db, "affiliates"), where("code", "==", String(code).trim().toLowerCase()), limit(1)))).docs[0] : affSnap.docs[0];
+      const affData = targetDoc.data();
+      const affiliateId = targetDoc.id;
+
+      if (affData.status !== 'active') {
+        return res.status(400).json({ error: 'Afiliado inativo no momento' });
+      }
+
+      const config = await getAffiliateConfig(db);
+      const windowDays = Number(config.attributionWindowDays) || 90;
+      const model = config.attributionModel || 'first_touch';
+
+      const now = new Date();
+      const nowIso = now.toISOString();
+      let expiresAt: string | null = null;
+      if (windowDays > 0) {
+        const expDate = new Date(now.getTime() + windowDays * 24 * 60 * 60 * 1000);
+        expiresAt = expDate.toISOString();
+      }
+
+      // Check existing attribution for this visitorId
+      const attrDocRef = doc(db, "affiliate_attributions", visitorId);
+      const attrSnap = await getDoc(attrDocRef);
+
+      let attributionToSave: any;
+      let isNewVisitor = false;
+
+      if (attrSnap.exists()) {
+        const existingAttr = attrSnap.data();
+        const isExpired = existingAttr.attributionExpiresAt && new Date(existingAttr.attributionExpiresAt).getTime() < now.getTime();
+
+        if (model === 'first_touch' && !isExpired && existingAttr.affiliateId !== affiliateId) {
+          // First touch protection: Keep existing active attribution!
+          return res.json({
+            success: true,
+            message: 'First-touch preservado',
+            affiliate: {
+              id: existingAttr.affiliateId,
+              code: existingAttr.affiliateCode,
+              name: existingAttr.affiliateName || ''
+            },
+            attribution: existingAttr,
+            attributionWindowDays: windowDays
+          });
+        }
+
+        // Update existing attribution
+        attributionToSave = {
+          ...existingAttr,
+          affiliateId,
+          affiliateCode: cleanCode,
+          affiliateName: affData.name,
+          lastVisitAt: nowIso,
+          attributionExpiresAt: expiresAt,
+          device: device || existingAttr.device,
+          browser: browser || existingAttr.browser,
+          landingPage: landingPage || existingAttr.landingPage,
+          referrer: referrer || existingAttr.referrer,
+          utmSource: utmSource || existingAttr.utmSource || null,
+          utmMedium: utmMedium || existingAttr.utmMedium || null,
+          utmCampaign: utmCampaign || existingAttr.utmCampaign || null,
+          utmContent: utmContent || existingAttr.utmContent || null,
+          utmTerm: utmTerm || existingAttr.utmTerm || null,
+          updatedAt: nowIso
+        };
+      } else {
+        // New visitor
+        isNewVisitor = true;
+        attributionToSave = {
+          id: visitorId,
+          affiliateId,
+          affiliateCode: cleanCode,
+          affiliateName: affData.name,
+          visitorId,
+          userId: null,
+          firstVisitAt: nowIso,
+          lastVisitAt: nowIso,
+          attributionExpiresAt: expiresAt,
+          device: device || 'desktop',
+          browser: browser || 'unknown',
+          landingPage: landingPage || '/',
+          referrer: referrer || '',
+          utmSource: utmSource || null,
+          utmMedium: utmMedium || null,
+          utmCampaign: utmCampaign || null,
+          utmContent: utmContent || null,
+          utmTerm: utmTerm || null,
+          status: 'active',
+          createdAt: nowIso,
+          updatedAt: nowIso
+        };
+      }
+
+      // Save attribution document
+      await setDoc(attrDocRef, attributionToSave, { merge: true });
+
+      // Log event
+      const eventRef = doc(collection(db, "affiliate_events"));
+      await setDoc(eventRef, {
+        id: eventRef.id,
+        affiliateId,
+        affiliateCode: cleanCode,
+        visitorId,
+        userId: null,
+        eventType: 'visit',
+        eventDate: nowIso,
+        metadata: {
+          landingPage,
+          referrer,
+          device,
+          browser,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmContent,
+          utmTerm
+        },
+        createdAt: nowIso,
+        timestamp: Date.now()
+      });
+
+      // Update metrics on affiliate
+      const currentMetrics = affData.metrics || {};
+      const newMetrics = {
+        ...currentMetrics,
+        visits: (currentMetrics.visits || 0) + 1,
+        uniqueVisitors: (currentMetrics.uniqueVisitors || 0) + (isNewVisitor ? 1 : 0)
+      };
+
+      await updateDoc(targetDoc.ref, {
+        metrics: newMetrics,
+        updatedAt: nowIso
+      });
+
+      return res.json({
+        success: true,
+        affiliate: {
+          id: affiliateId,
+          code: cleanCode,
+          name: affData.name
+        },
+        attribution: attributionToSave,
+        attributionWindowDays: windowDays
+      });
+    } catch (err: any) {
+      console.error("[AFFILIATE-TRACK-VISIT-ERROR]", err);
+      res.status(500).json({ error: err.message || 'Erro ao registrar acesso' });
+    }
+  });
+
+  // 2. Track Signup
+  router.post('/track-signup', async (req, res) => {
+    try {
+      const { userId, email, name, visitorId, affiliateId, affiliateCode } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: 'userId é obrigatório' });
+      }
+
+      const db = getDb();
+      let targetAffiliateId = affiliateId;
+      let targetAffiliateCode = affiliateCode;
+
+      // Check attribution document by visitorId if affiliateId not supplied
+      if ((!targetAffiliateId || !targetAffiliateCode) && visitorId) {
+        const attrSnap = await getDoc(doc(db, "affiliate_attributions", visitorId));
+        if (attrSnap.exists()) {
+          const attrData = attrSnap.data();
+          targetAffiliateId = attrData.affiliateId;
+          targetAffiliateCode = attrData.affiliateCode;
+        }
+      }
+
+      if (!targetAffiliateId) {
+        return res.json({ success: false, message: 'Nenhum afiliado atribuído' });
+      }
+
+      // Check affiliate doc
+      const affRef = doc(db, "affiliates", targetAffiliateId);
+      const affSnap = await getDoc(affRef);
+      if (!affSnap.exists()) {
+        return res.status(404).json({ error: 'Afiliado não encontrado' });
+      }
+      const affData = affSnap.data();
+
+      // Deduplication: Has signup already been registered for this userId?
+      const existingUserQuery = query(
+        collection(db, "affiliate_events"), 
+        where("userId", "==", userId), 
+        where("eventType", "==", "signup"),
+        limit(1)
+      );
+      const existingSnap = await getDocs(existingUserQuery);
+      if (!existingSnap.empty) {
+        return res.json({ success: true, message: 'Cadastro já atribuído anteriormente' });
+      }
+
+      const nowIso = new Date().toISOString();
+
+      // 1. Update user document
+      const userRef = doc(db, "users", userId);
+      await setDoc(userRef, {
+        affiliateId: targetAffiliateId,
+        affiliateCode: targetAffiliateCode,
+        affiliateAttributedAt: nowIso
+      }, { merge: true });
+
+      // 2. Update attribution if exists
+      if (visitorId) {
+        const attrRef = doc(db, "affiliate_attributions", visitorId);
+        await setDoc(attrRef, {
+          userId,
+          status: 'converted',
+          updatedAt: nowIso
+        }, { merge: true });
+      }
+
+      // 3. Log event
+      const eventRef = doc(collection(db, "affiliate_events"));
+      await setDoc(eventRef, {
+        id: eventRef.id,
+        affiliateId: targetAffiliateId,
+        affiliateCode: targetAffiliateCode,
+        visitorId: visitorId || '',
+        userId,
+        eventType: 'signup',
+        eventDate: nowIso,
+        metadata: {
+          email,
+          name
+        },
+        createdAt: nowIso,
+        timestamp: Date.now()
+      });
+
+      // 4. Increment signups on affiliate
+      const currentMetrics = affData.metrics || {};
+      await updateDoc(affRef, {
+        'metrics.signups': (currentMetrics.signups || 0) + 1,
+        updatedAt: nowIso
+      });
+
+      return res.json({
+        success: true,
+        attribution: {
+          affiliateId: targetAffiliateId,
+          affiliateCode: targetAffiliateCode,
+          userId
+        }
+      });
+    } catch (err: any) {
+      console.error("[AFFILIATE-TRACK-SIGNUP-ERROR]", err);
+      res.status(500).json({ error: err.message || 'Erro ao registrar cadastro' });
+    }
+  });
+
+  // 3. Track Login
+  router.post('/track-login', async (req, res) => {
+    try {
+      const { userId, visitorId } = req.body;
+      if (!userId) return res.status(400).json({ error: 'userId obrigatório' });
+
+      const db = getDb();
+      const userDoc = await getDoc(doc(db, "users", userId));
+      if (!userDoc.exists()) return res.json({ success: false });
+
+      const userData = userDoc.data();
+      const affiliateId = userData.affiliateId;
+      if (!affiliateId) return res.json({ success: false });
+
+      // Deduplicate: Don't spam logins if already logged in the last 24h
+      const todayIso = new Date().toISOString().split('T')[0];
+      const recentLoginQuery = query(
+        collection(db, "affiliate_events"),
+        where("userId", "==", userId),
+        where("eventType", "==", "login"),
+        limit(5)
+      );
+      const recentLogins = await getDocs(recentLoginQuery);
+      const alreadyLoggedToday = recentLogins.docs.some(d => d.data().eventDate?.startsWith(todayIso));
+
+      if (!alreadyLoggedToday) {
+        const nowIso = new Date().toISOString();
+        const eventRef = doc(collection(db, "affiliate_events"));
+        await setDoc(eventRef, {
+          id: eventRef.id,
+          affiliateId,
+          affiliateCode: userData.affiliateCode || '',
+          visitorId: visitorId || '',
+          userId,
+          eventType: 'login',
+          eventDate: nowIso,
+          metadata: { email: userData.email },
+          createdAt: nowIso,
+          timestamp: Date.now()
+        });
+
+        const affRef = doc(db, "affiliates", affiliateId);
+        const affSnap = await getDoc(affRef);
+        if (affSnap.exists()) {
+          const m = affSnap.data().metrics || {};
+          await updateDoc(affRef, {
+            'metrics.logins': (m.logins || 0) + 1,
+            updatedAt: nowIso
+          });
+        }
+      }
+
+      res.json({ success: true });
+    } catch (e) {
+      res.json({ success: false });
+    }
+  });
+
+  // 4. Track Checkout Started
+  router.post('/track-checkout', async (req, res) => {
+    try {
+      const { userId, visitorId, plan } = req.body;
+      const db = getDb();
+
+      let affiliateId: string | null = null;
+      let affiliateCode: string | null = null;
+
+      if (userId) {
+        const userDoc = await getDoc(doc(db, "users", userId));
+        if (userDoc.exists()) {
+          affiliateId = userDoc.data().affiliateId || null;
+          affiliateCode = userDoc.data().affiliateCode || null;
+        }
+      }
+
+      if (!affiliateId && visitorId) {
+        const attrDoc = await getDoc(doc(db, "affiliate_attributions", visitorId));
+        if (attrDoc.exists()) {
+          affiliateId = attrDoc.data().affiliateId || null;
+          affiliateCode = attrDoc.data().affiliateCode || null;
+        }
+      }
+
+      if (affiliateId) {
+        const nowIso = new Date().toISOString();
+        const eventRef = doc(collection(db, "affiliate_events"));
+        await setDoc(eventRef, {
+          id: eventRef.id,
+          affiliateId,
+          affiliateCode: affiliateCode || '',
+          visitorId: visitorId || '',
+          userId: userId || null,
+          eventType: 'checkout_started',
+          eventDate: nowIso,
+          metadata: { plan: plan || 'mensal' },
+          createdAt: nowIso,
+          timestamp: Date.now()
+        });
+
+        const affRef = doc(db, "affiliates", affiliateId);
+        const affSnap = await getDoc(affRef);
+        if (affSnap.exists()) {
+          const m = affSnap.data().metrics || {};
+          await updateDoc(affRef, {
+            'metrics.checkoutsStarted': (m.checkoutsStarted || 0) + 1,
+            updatedAt: nowIso
+          });
+        }
+      }
+
+      res.json({ success: true });
+    } catch (e) {
+      res.json({ success: false });
+    }
+  });
+
+  app.use('/api/affiliates', router);
+
+  // ==========================================
+  // ADMIN AFFILIATE MANAGEMENT ENDPOINTS
+  // (Protected by requireAdmin middleware)
+  // ==========================================
+
+  const adminAffRouter = express.Router();
+  adminAffRouter.use(authenticate);
+
+  const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const user = (req as any).user;
+    if (!user || user.uid === "guest") {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const db = getDb();
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        return res.status(403).json({ error: "Forbidden - User not found" });
+      }
+
+      const userData = userDoc.data();
+      const role = userData?.role || '';
+      
+      if (!['master', 'admin', 'suporte', 'editor'].includes(role)) {
+        return res.status(403).json({ error: "Forbidden - Insufficient permissions" });
+      }
+
+      (req as any).adminRole = role;
+      next();
+    } catch (e) {
+      console.error("[REQUIRE-ADMIN-ERROR]", e);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
+
+  adminAffRouter.use(requireAdmin);
+
+  // 1. Dashboard Aggregate Stats
+  adminAffRouter.get('/stats', async (req, res) => {
+    try {
+      const db = getDb();
+      const affSnap = await getDocs(collection(db, "affiliates"));
+      
+      let totalAffiliates = affSnap.size;
+      let activeAffiliates = 0;
+      let totalVisits = 0;
+      let totalUniqueVisitors = 0;
+      let totalSignups = 0;
+      let totalLogins = 0;
+      let totalCheckoutsStarted = 0;
+      let totalSubscriptions = 0;
+      let totalRevenue = 0;
+      let totalCommission = 0;
+
+      affSnap.forEach(d => {
+        const a = d.data();
+        if (a.status === 'active') activeAffiliates++;
+        const m = a.metrics || {};
+        totalVisits += (m.visits || 0);
+        totalUniqueVisitors += (m.uniqueVisitors || 0);
+        totalSignups += (m.signups || 0);
+        totalLogins += (m.logins || 0);
+        totalCheckoutsStarted += (m.checkoutsStarted || 0);
+        totalSubscriptions += (m.subscriptions || 0);
+        totalRevenue += (m.totalRevenue || 0);
+        totalCommission += (m.totalCommission || 0);
+      });
+
+      const conversionRateSignup = totalUniqueVisitors > 0 
+        ? Math.round((totalSignups / totalUniqueVisitors) * 10000) / 100 
+        : (totalVisits > 0 ? Math.round((totalSignups / totalVisits) * 10000) / 100 : 0);
+
+      const conversionRateSubscription = totalSignups > 0 
+        ? Math.round((totalSubscriptions / totalSignups) * 10000) / 100 
+        : 0;
+
+      const globalConversionRate = totalUniqueVisitors > 0 
+        ? Math.round((totalSubscriptions / totalUniqueVisitors) * 10000) / 100 
+        : 0;
+
+      // Recent events
+      const recentEventsQuery = query(
+        collection(db, "affiliate_events"), 
+        orderBy("timestamp", "desc"), 
+        limit(20)
+      );
+      let recentEvents: any[] = [];
+      try {
+        const eventsSnap = await getDocs(recentEventsQuery);
+        recentEvents = eventsSnap.docs.map(doc => doc.data());
+      } catch (e) {
+        console.warn("[ADMIN-AFFILIATE] Could not fetch recent events by timestamp index:", e);
+      }
+
+      res.json({
+        totalAffiliates,
+        activeAffiliates,
+        totalVisits,
+        totalUniqueVisitors,
+        totalSignups,
+        totalLogins,
+        totalCheckoutsStarted,
+        totalSubscriptions,
+        totalRevenue: Math.round(totalRevenue * 100) / 100,
+        totalCommission: Math.round(totalCommission * 100) / 100,
+        conversionRateSignup,
+        conversionRateSubscription,
+        globalConversionRate,
+        recentEvents
+      });
+    } catch (err: any) {
+      console.error("[ADMIN-AFFILIATES-STATS-ERROR]", err);
+      res.status(500).json({ error: err.message || 'Erro ao carregar estatísticas' });
+    }
+  });
+
+  // 2. List All Affiliates
+  adminAffRouter.get('/list', async (req, res) => {
+    try {
+      const db = getDb();
+      const snap = await getDocs(collection(db, "affiliates"));
+      const affiliates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Sort by total revenue desc by default
+      affiliates.sort((a: any, b: any) => {
+        const revA = a.metrics?.totalRevenue || 0;
+        const revB = b.metrics?.totalRevenue || 0;
+        return revB - revA;
+      });
+
+      res.json(affiliates);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 3. Create New Affiliate
+  adminAffRouter.post('/create', async (req, res) => {
+    try {
+      const { name, email, code, commissionRate, status } = req.body;
+      if (!name || !email || !code) {
+        return res.status(400).json({ error: 'Nome, e-mail e código são obrigatórios' });
+      }
+
+      const db = getDb();
+      const cleanCode = String(code).trim().toUpperCase();
+
+      // Check unique code
+      const existingQuery = query(collection(db, "affiliates"), where("code", "==", cleanCode), limit(1));
+      const existingSnap = await getDocs(existingQuery);
+      if (!existingSnap.empty) {
+        return res.status(400).json({ error: `O código de afiliado "${cleanCode}" já está em uso por outro parceiro.` });
+      }
+
+      const affRef = doc(collection(db, "affiliates"));
+      const nowIso = new Date().toISOString();
+
+      const newAffiliate = {
+        id: affRef.id,
+        name: String(name).trim(),
+        email: String(email).trim().toLowerCase(),
+        code: cleanCode,
+        status: status === 'inactive' ? 'inactive' : 'active',
+        commissionRate: typeof commissionRate === 'number' ? commissionRate : 30,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        metrics: {
+          visits: 0,
+          uniqueVisitors: 0,
+          signups: 0,
+          logins: 0,
+          checkoutsStarted: 0,
+          subscriptions: 0,
+          totalRevenue: 0,
+          totalCommission: 0
+        }
+      };
+
+      await setDoc(affRef, newAffiliate);
+      res.json({ success: true, affiliate: newAffiliate });
+    } catch (err: any) {
+      console.error("[AFFILIATE-CREATE-ERROR]", err);
+      res.status(500).json({ error: err.message || 'Erro ao criar afiliado' });
+    }
+  });
+
+  // 4. Update Affiliate
+  adminAffRouter.put('/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, email, code, commissionRate, status } = req.body;
+
+      const db = getDb();
+      const affRef = doc(db, "affiliates", id);
+      const affSnap = await getDoc(affRef);
+      if (!affSnap.exists()) {
+        return res.status(404).json({ error: 'Afiliado não encontrado' });
+      }
+
+      const updates: any = { updatedAt: new Date().toISOString() };
+      if (name) updates.name = String(name).trim();
+      if (email) updates.email = String(email).trim().toLowerCase();
+      if (status) updates.status = status;
+      if (typeof commissionRate === 'number') updates.commissionRate = commissionRate;
+
+      if (code) {
+        const cleanCode = String(code).trim().toUpperCase();
+        // Check uniqueness if changing code
+        const codeQuery = query(collection(db, "affiliates"), where("code", "==", cleanCode), limit(1));
+        const codeSnap = await getDocs(codeQuery);
+        if (!codeSnap.empty && codeSnap.docs[0].id !== id) {
+          return res.status(400).json({ error: `O código "${cleanCode}" já está em uso.` });
+        }
+        updates.code = cleanCode;
+      }
+
+      await updateDoc(affRef, updates);
+      res.json({ success: true, message: 'Afiliado atualizado com sucesso' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 5. Toggle Status
+  adminAffRouter.post('/:id/toggle-status', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const db = getDb();
+      const affRef = doc(db, "affiliates", id);
+      const snap = await getDoc(affRef);
+      if (!snap.exists()) {
+        return res.status(404).json({ error: 'Afiliado não encontrado' });
+      }
+
+      const current = snap.data().status;
+      const newStatus = current === 'active' ? 'inactive' : 'active';
+      await updateDoc(affRef, { 
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      });
+
+      res.json({ success: true, status: newStatus });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 6. Get Single Affiliate Details
+  adminAffRouter.get('/:id/details', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const db = getDb();
+      const affSnap = await getDoc(doc(db, "affiliates", id));
+      if (!affSnap.exists()) {
+        return res.status(404).json({ error: 'Afiliado não encontrado' });
+      }
+
+      const affiliate = { id: affSnap.id, ...affSnap.data() } as any;
+
+      // 1. Get attributed users from users collection
+      const usersQuery = query(collection(db, "users"), where("affiliateId", "==", id), limit(100));
+      const usersSnap = await getDocs(usersQuery);
+      const attributedUsers = usersSnap.docs.map(d => {
+        const u = d.data();
+        return {
+          uid: d.id,
+          name: u.displayName || u.name || 'Sem nome',
+          email: u.email || '',
+          phone: u.phone || '',
+          createdAt: u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : (u.createdAt || ''),
+          lastLogin: u.lastLogin?.toDate ? u.lastLogin.toDate().toISOString() : (u.lastLogin || ''),
+          planStatus: u.planStatus || 'free',
+          hasActiveSubscription: u.planStatus === 'premium' && !!(u.stripeSubscriptionId || u.subscription === 'active'),
+          stripeCustomerId: u.stripeCustomerId || '',
+          affiliateAttributedAt: u.affiliateAttributedAt || ''
+        };
+      });
+
+      // 2. Get subscriptions linked to this affiliate
+      const subsQuery = query(collection(db, "affiliate_subscriptions"), where("affiliateId", "==", id), limit(100));
+      const subsSnap = await getDocs(subsQuery);
+      const subscriptions = subsSnap.docs.map(d => d.data());
+
+      // 3. Get recent events for this affiliate
+      const eventsQuery = query(collection(db, "affiliate_events"), where("affiliateId", "==", id), limit(100));
+      const eventsSnap = await getDocs(eventsQuery);
+      const events = eventsSnap.docs.map(d => d.data());
+      events.sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      // 4. Calculate UTM analytics breakdown
+      const utmSources: Record<string, number> = {};
+      const utmCampaigns: Record<string, number> = {};
+      events.forEach((ev: any) => {
+        if (ev.eventType === 'visit' && ev.metadata) {
+          const src = ev.metadata.utmSource || '(direto/orgânico)';
+          const camp = ev.metadata.utmCampaign || '(nenhuma)';
+          utmSources[src] = (utmSources[src] || 0) + 1;
+          utmCampaigns[camp] = (utmCampaigns[camp] || 0) + 1;
+        }
+      });
+
+      res.json({
+        affiliate,
+        attributedUsers,
+        subscriptions,
+        events: events.slice(0, 50),
+        analytics: {
+          utmSources,
+          utmCampaigns
+        }
+      });
+    } catch (err: any) {
+      console.error("[ADMIN-AFFILIATE-DETAILS-ERROR]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 7. Get All Attributed Users (Global)
+  adminAffRouter.get('/all-users', async (req, res) => {
+    try {
+      const db = getDb();
+      // Fetch users that have affiliateId
+      const usersQuery = query(collection(db, "users"), where("affiliateId", "!=", null), limit(250));
+      const usersSnap = await getDocs(usersQuery);
+      
+      const users = usersSnap.docs.map(d => {
+        const u = d.data();
+        return {
+          uid: d.id,
+          name: u.displayName || u.name || 'Sem nome',
+          email: u.email || '',
+          affiliateId: u.affiliateId,
+          affiliateCode: u.affiliateCode,
+          createdAt: u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : (u.createdAt || ''),
+          lastLogin: u.lastLogin?.toDate ? u.lastLogin.toDate().toISOString() : (u.lastLogin || ''),
+          planStatus: u.planStatus || 'free',
+          hasActiveSubscription: u.planStatus === 'premium' && !!(u.stripeSubscriptionId || u.subscription === 'active'),
+          affiliateAttributedAt: u.affiliateAttributedAt || ''
+        };
+      });
+
+      res.json(users);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 8. Get All Subscriptions (Global)
+  adminAffRouter.get('/all-subscriptions', async (req, res) => {
+    try {
+      const db = getDb();
+      const subsSnap = await getDocs(collection(db, "affiliate_subscriptions"));
+      const subscriptions = subsSnap.docs.map(d => d.data());
+      subscriptions.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      res.json(subscriptions);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 9. Get / Set Attribution Config
+  adminAffRouter.get('/config', async (req, res) => {
+    try {
+      const db = getDb();
+      const config = await getAffiliateConfig(db);
+      res.json(config);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  adminAffRouter.post('/config', async (req, res) => {
+    try {
+      const { attributionWindowDays, attributionModel, defaultCommissionRate } = req.body;
+      const db = getDb();
+      const nowIso = new Date().toISOString();
+
+      const newConfig = {
+        attributionWindowDays: typeof attributionWindowDays === 'number' ? attributionWindowDays : 90,
+        attributionModel: attributionModel === 'last_touch' ? 'last_touch' : 'first_touch',
+        defaultCommissionRate: typeof defaultCommissionRate === 'number' ? defaultCommissionRate : 30,
+        updatedAt: nowIso
+      };
+
+      await setDoc(doc(db, "affiliate_config", "settings"), newConfig, { merge: true });
+      res.json({ success: true, config: newConfig });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 10. Simulate Sale (for Admin testing and verification)
+  adminAffRouter.post('/simulate-sale', async (req, res) => {
+    try {
+      const { affiliateId, plan, amount, userEmail, userName } = req.body;
+      if (!affiliateId) return res.status(400).json({ error: 'affiliateId é obrigatório' });
+
+      const db = getDb();
+      const simUserId = `sim_user_${Date.now().toString(36)}`;
+      const simSessionId = `cs_sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const targetAmount = typeof amount === 'number' ? amount : (plan === 'anual' ? 149.00 : 17.99);
+
+      // Call recordAffiliateSubscription
+      const result = await recordAffiliateSubscription(db, {
+        affiliateId,
+        userId: simUserId,
+        userEmail: userEmail || `teste_${Date.now()}@exemplo.com`,
+        userName: userName || 'Usuário Teste Simulação',
+        plan: plan || 'mensal',
+        amount: targetAmount,
+        stripeSessionId: simSessionId,
+        status: 'paid'
+      });
+
+      res.json({
+        success: result.success,
+        simulatedSessionId: simSessionId,
+        amount: targetAmount,
+        commission: result.commission,
+        affiliateId: result.affiliateId
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.use('/api/admin/affiliates', adminAffRouter);
+}

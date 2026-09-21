@@ -143,6 +143,109 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "name", "questionIds", "currentIndex", "status", "updatedAt"]
+    },
+    "PdfCourse": {
+      "title": "PDF Course",
+      "description": "A study course or digital book in PDF format with modules, chapters and cloud metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "discipline": { "type": "string" },
+        "career": { "type": "string" },
+        "targetExam": { "type": "string" },
+        "author": { "type": "object" },
+        "coverGradient": { "type": "string" },
+        "totalPages": { "type": "number" },
+        "totalModules": { "type": "number" },
+        "fileSizeMb": { "type": "number" },
+        "pdfUrl": { "type": "string" },
+        "downloadUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "highlights": { "type": "array", "items": { "type": "string" } },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "modules": { "type": "array" },
+        "isPremium": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "title", "discipline", "career", "totalPages", "pdfUrl"]
+    },
+    "UserPdfProgress": {
+      "title": "User PDF Progress",
+      "description": "Reading progress, bookmarks and notes for a PDF course per user",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string" },
+        "currentPage": { "type": "number" },
+        "totalPages": { "type": "number" },
+        "completedChapters": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["not_started", "reading", "completed"] },
+        "lastReadAt": { "type": "number" },
+        "isFavorite": { "type": "boolean" }
+      },
+      "required": ["courseId", "currentPage", "totalPages", "status", "lastReadAt"]
+    },
+    "Affiliate": {
+      "title": "Affiliate Partner",
+      "description": "Affiliate partner registered in the system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "code": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "commissionRate": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "metrics": { "type": "object" }
+      },
+      "required": ["id", "name", "email", "code", "status"]
+    },
+    "AffiliateAttribution": {
+      "title": "Affiliate Attribution",
+      "description": "Visitor session linked to an affiliate partner",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "affiliateCode": { "type": "string" },
+        "visitorId": { "type": "string" },
+        "userId": { "type": "string" },
+        "firstVisitAt": { "type": "string", "format": "date-time" },
+        "lastVisitAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "affiliateId", "visitorId"]
+    },
+    "AffiliateEvent": {
+      "title": "Affiliate Event",
+      "description": "Chronological tracking event in the affiliate funnel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "eventType": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "affiliateId", "eventType", "createdAt"]
+    },
+    "AffiliateSubscription": {
+      "title": "Affiliate Subscription",
+      "description": "Confirmed subscription or purchase converted via an affiliate",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "commission": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "affiliateId", "userId", "amount", "commission"]
     }
   },
   "firestore": {
@@ -173,6 +276,34 @@
     "/users/{userId}/flashcards/{flashcardId}": {
       "schema": { "$ref": "#/entities/Flashcard" },
       "description": "User's flashcards."
+    },
+    "/users/{userId}/pdf_progress/{courseId}": {
+      "schema": { "$ref": "#/entities/UserPdfProgress" },
+      "description": "User reading progress for PDF course."
+    },
+    "/pdf_courses/{courseId}": {
+      "schema": { "$ref": "#/entities/PdfCourse" },
+      "description": "Cloud PDF courses directory."
+    },
+    "/affiliates/{affiliateId}": {
+      "schema": { "$ref": "#/entities/Affiliate" },
+      "description": "Registered affiliates and their aggregate performance."
+    },
+    "/affiliate_attributions/{attributionId}": {
+      "schema": { "$ref": "#/entities/AffiliateAttribution" },
+      "description": "Persistent attribution records linking visitors/users to affiliates."
+    },
+    "/affiliate_events/{eventId}": {
+      "schema": { "$ref": "#/entities/AffiliateEvent" },
+      "description": "Individual conversion events across the user journey."
+    },
+    "/affiliate_subscriptions/{subscriptionId}": {
+      "schema": { "$ref": "#/entities/AffiliateSubscription" },
+      "description": "Subscriptions and purchases converted through affiliate referral."
+    },
+    "/affiliate_config/settings": {
+      "schema": { "type": "object" },
+      "description": "Global affiliate attribution configuration."
     },
     "/news/{newsId}": {
       "schema": "NewsItem",

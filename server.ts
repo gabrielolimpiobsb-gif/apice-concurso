@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
 import { setupAdminRoutes } from "./server/adminRoutes";
+import { setupAffiliateRoutes, recordAffiliateSubscription } from "./server/affiliateRoutes";
 import firebaseConfig from "./firebase-applet-config.json" with { type: 'json' };
 
 // Initialize Firebase Admin
@@ -275,6 +276,21 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
                 timestamp: Date.now()
               }, { merge: true });
               console.log(`[STRIPE-WEBHOOK] Compra aprovada registrada com sucesso em flashcard_purchases!`);
+
+              // Atribuição de comissão de afiliado para compra de flashcards
+              recordAffiliateSubscription(db, {
+                affiliateId: metadata.affiliateId,
+                affiliateCode: metadata.affiliateCode,
+                userId: userId,
+                userEmail: customerEmail,
+                userName: customerName,
+                plan: `Flashcards: ${metadata.packTitle || metadata.packId}`,
+                amount: amountPaid,
+                stripeSessionId: session.id,
+                stripeCustomerId: session.customer || undefined,
+                status: 'paid'
+              }).catch(affErr => console.warn("[STRIPE-WEBHOOK] Erro atribuição afiliado flashcard:", affErr));
+
             } catch (recErr) {
               console.error("[STRIPE-WEBHOOK] Erro ao salvar registro em flashcard_purchases:", recErr);
             }
@@ -286,6 +302,26 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
               stripeCustomerId: session.customer || null,
               stripeSubscriptionId: session.subscription || null
             }, { merge: true });
+
+            // Atribuição de comissão de afiliado para assinatura Premium
+            const amountPaid = session.amount_total ? session.amount_total / 100 : (metadata.plan === 'anual' ? 149.00 : 17.99);
+            const customerEmail = session.customer_details?.email || session.customer_email || metadata.userEmail || '';
+            const customerName = session.customer_details?.name || '';
+            const planName = metadata.plan || (amountPaid > 50 ? 'anual' : 'mensal');
+
+            recordAffiliateSubscription(db, {
+              affiliateId: metadata.affiliateId,
+              affiliateCode: metadata.affiliateCode,
+              userId: userId,
+              userEmail: customerEmail,
+              userName: customerName,
+              plan: planName,
+              amount: amountPaid,
+              stripeSessionId: session.id,
+              stripeSubscriptionId: session.subscription || undefined,
+              stripeCustomerId: session.customer || undefined,
+              status: 'paid'
+            }).catch(affErr => console.warn("[STRIPE-WEBHOOK] Erro atribuição afiliado assinatura:", affErr));
           }
         } else {
           console.warn("[STRIPE-WEBHOOK] Checkout finalizado porém pagamento ainda não confirmado como paid:", { userId, payment_status: session.payment_status });
@@ -427,7 +463,7 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
   // Stripe Handler
   const handleCheckout = async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
-    const { priceId } = req.body || {};
+    const { priceId, affiliateId: reqAffId, affiliateCode: reqAffCode, plan: reqPlan } = req.body || {};
     console.log(`[STRIPE-FLOW] Starting checkout for user: ${user?.uid} (${req.method} ${req.url})`);
     
     try {
@@ -442,6 +478,18 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
         return res.json({ url: `${baseUrl}/?success=true` });
       }
 
+      let affId = reqAffId;
+      let affCode = reqAffCode;
+      if (!affId && user?.uid && user.uid !== 'guest') {
+        try {
+          const userDoc = await getDoc(doc(getDb(), `users/${user.uid}`));
+          if (userDoc.exists()) {
+            affId = userDoc.data()?.affiliateId;
+            affCode = userDoc.data()?.affiliateCode;
+          }
+        } catch (e) {}
+      }
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'subscription',
@@ -453,7 +501,13 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
         cancel_url: `${baseUrl}/?canceled=true`,
         customer_email: user?.email !== 'guest' ? user?.email : undefined,
         client_reference_id: user?.uid, // added client_reference_id for robust webhook support if added later
-        metadata: { userId: user?.uid }
+        metadata: { 
+          userId: user?.uid,
+          affiliateId: affId || '',
+          affiliateCode: affCode || '',
+          plan: reqPlan || (priceId?.includes('anual') ? 'anual' : 'mensal'),
+          userEmail: user?.email !== 'guest' ? (user?.email || '') : ''
+        }
       });
 
       console.log(`[STRIPE-FLOW] Session created: ${session.id}`);
@@ -468,7 +522,7 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
   
   const handleCheckoutFlashcard = async (req, res) => {
     const user = req.user;
-    const { packId, packTitle, packPrice } = req.body;
+    const { packId, packTitle, packPrice, affiliateId: reqAffId, affiliateCode: reqAffCode } = req.body;
     
     console.log(`[STRIPE-FLOW] Starting flashcard checkout for user: ${user?.uid}, pack: ${packId}`);
     
@@ -482,6 +536,18 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
       if (!stripe) {
         console.warn("[STRIPE-FLOW] Stripe client not available, returning mock flashcard success URL.");
         return res.json({ url: `${baseUrl}/?flashcard_success=true&packId=${packId}` });
+      }
+
+      let affId = reqAffId;
+      let affCode = reqAffCode;
+      if (!affId && user?.uid && user.uid !== 'guest') {
+        try {
+          const userDoc = await getDoc(doc(getDb(), `users/${user.uid}`));
+          if (userDoc.exists()) {
+            affId = userDoc.data()?.affiliateId;
+            affCode = userDoc.data()?.affiliateCode;
+          }
+        } catch (e) {}
       }
 
       const session = await stripe.checkout.sessions.create({
@@ -507,7 +573,9 @@ app.set('trust proxy', 1); // Trust first proxy for express-rate-limit
           packTitle: packTitle || '',
           packPrice: String(packPrice || 15),
           type: 'flashcard_pack',
-          userEmail: user?.email !== 'guest' ? (user?.email || '') : ''
+          userEmail: user?.email !== 'guest' ? (user?.email || '') : '',
+          affiliateId: affId || '',
+          affiliateCode: affCode || ''
         }
       });
 
@@ -885,6 +953,7 @@ async function withFirestoreTimeout<T>(promise: Promise<T>, timeoutMs = 3500, fa
 
   // API 404 handler
   setupAdminRoutes(app, authenticate as any, getDb);
+  setupAffiliateRoutes(app, authenticate as any, getDb);
 
   app.all("/api/*", (req, res) => {
     console.warn(`[API-404] ${req.method} ${req.url}`);

@@ -51,6 +51,11 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow write: if isAdmin();
       }
+
+      match /pdf_courses/{courseId} {
+        allow read, list: if true;
+        allow write: if isSignedIn();
+      }
       
       match /disciplines/{disciplineId} {
         allow read: if isSignedIn();
@@ -90,6 +95,32 @@ service cloud.firestore {
       match /flashcard_purchases/{purchaseId} {
         allow read: if isAdmin() || isBackend();
         allow write: if isBackend() || isAdmin();
+      }
+
+      // Affiliate System Collections (Admin & Backend only for security)
+      match /affiliates/{affiliateId} {
+        allow read: if isAdmin() || isBackend();
+        allow write: if isAdmin() || isBackend();
+      }
+
+      match /affiliate_attributions/{attrId} {
+        allow read: if isAdmin() || isBackend();
+        allow write: if isAdmin() || isBackend();
+      }
+
+      match /affiliate_events/{eventId} {
+        allow read: if isAdmin() || isBackend();
+        allow write: if isAdmin() || isBackend();
+      }
+
+      match /affiliate_subscriptions/{subId} {
+        allow read: if isAdmin() || isBackend();
+        allow write: if isAdmin() || isBackend();
+      }
+
+      match /affiliate_config/{configId} {
+        allow read: if isAdmin() || isBackend();
+        allow write: if isAdmin() || isBackend();
       }
   }
 }
