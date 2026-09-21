@@ -618,56 +618,93 @@ export function setupAffiliateRoutes(
     try {
       const user = (req as any).user;
       const db = getDb();
-      const { email, role, name } = await getAuthenticatedUserEmailAndRole(user, db);
+      const { email, role, name, uid } = await getAuthenticatedUserEmailAndRole(user, db);
 
-      if (!email) {
+      if (!email && !uid) {
         return res.json({ isAffiliate: false });
       }
-      
-      let q = query(
-        collection(db, "affiliates"), 
-        where("email", "==", email), 
-        limit(1)
-      );
-      let snap = await getDocs(q);
 
-      if (snap.empty) {
-        // If user is admin/master, auto-provision affiliate profile so they can test and use the portal
-        if (role === 'master' || role === 'admin' || email === 'arthurolimpio787@gmail.com') {
-          const affRef = doc(collection(db, "affiliates"));
-          const newAffiliate = {
-            id: affRef.id,
-            name: name || "Arthur Olimpio",
-            email: email,
-            code: "APICE",
-            commissionRate: 30,
-            status: "active",
-            pixKey: "",
-            pixType: "email",
-            metrics: {
-              visits: 0,
-              uniqueVisitors: 0,
-              signups: 0,
-              subscriptions: 0,
-              totalRevenue: 0,
-              totalCommission: 0
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          await setDoc(affRef, newAffiliate);
-          return res.json({
-            isAffiliate: true,
-            affiliateId: affRef.id,
-            code: "APICE",
-            name: newAffiliate.name,
-            commissionRate: 30
-          });
+      const cleanEmail = (email || '').toLowerCase().trim();
+      let affDoc: any = null;
+
+      // 1. Try finding by email
+      if (cleanEmail) {
+        const q = query(
+          collection(db, "affiliates"), 
+          where("email", "==", cleanEmail), 
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          affDoc = snap.docs[0];
         }
+      }
+
+      // 2. Try finding by user doc affiliateId or affiliateCode
+      if (!affDoc && uid) {
+        try {
+          const uDoc = await getDoc(doc(db, "users", uid));
+          if (uDoc.exists()) {
+            const uData = uDoc.data();
+            if (uData.affiliateId) {
+              const directSnap = await getDoc(doc(db, "affiliates", uData.affiliateId));
+              if (directSnap.exists()) {
+                affDoc = directSnap;
+              }
+            } else if (uData.affiliateCode) {
+              const codeQ = query(
+                collection(db, "affiliates"),
+                where("code", "==", uData.affiliateCode.toUpperCase().trim()),
+                limit(1)
+              );
+              const codeSnap = await getDocs(codeQ);
+              if (!codeSnap.empty) {
+                affDoc = codeSnap.docs[0];
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("[PORTAL-STATUS-USER-CHECK-ERROR]", e);
+        }
+      }
+
+      // 3. Auto-provision for master/admin/arthur if missing
+      if (!affDoc && (role === 'master' || role === 'admin' || cleanEmail === 'arthurolimpio787@gmail.com')) {
+        const affRef = doc(collection(db, "affiliates"));
+        const newAffiliate = {
+          id: affRef.id,
+          name: name || "Arthur Olimpio",
+          email: cleanEmail || 'arthurolimpio787@gmail.com',
+          code: "APICE",
+          commissionRate: 30,
+          status: "active",
+          pixKey: "",
+          pixType: "email",
+          metrics: {
+            visits: 0,
+            uniqueVisitors: 0,
+            signups: 0,
+            subscriptions: 0,
+            totalRevenue: 0,
+            totalCommission: 0
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(affRef, newAffiliate);
+        return res.json({
+          isAffiliate: true,
+          affiliateId: affRef.id,
+          code: "APICE",
+          name: newAffiliate.name,
+          commissionRate: 30
+        });
+      }
+
+      if (!affDoc) {
         return res.json({ isAffiliate: false });
       }
 
-      const affDoc = snap.docs[0];
       const affData = affDoc.data();
 
       // STRICT VALIDATION: Only true if validated by admin as active
@@ -693,28 +730,64 @@ export function setupAffiliateRoutes(
     try {
       const user = (req as any).user;
       const db = getDb();
-      const { email, role, name } = await getAuthenticatedUserEmailAndRole(user, db);
+      const { email, role, name, uid } = await getAuthenticatedUserEmailAndRole(user, db);
 
-      if (!email) {
+      if (!email && !uid) {
         return res.status(401).json({ error: "Não autorizado. Por favor faça login." });
       }
 
-      // Find affiliate strictly by the authenticated email
-      let q = query(
-        collection(db, "affiliates"), 
-        where("email", "==", email), 
-        limit(1)
-      );
-      let snap = await getDocs(q);
+      const cleanEmail = (email || '').toLowerCase().trim();
+      let affDoc: any = null;
 
-      if (snap.empty) {
-        // If user is admin/master, auto-provision affiliate profile
-        if (role === 'master' || role === 'admin' || email === 'arthurolimpio787@gmail.com') {
+      // 1. Try finding by email
+      if (cleanEmail) {
+        const q = query(
+          collection(db, "affiliates"), 
+          where("email", "==", cleanEmail), 
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          affDoc = snap.docs[0];
+        }
+      }
+
+      // 2. Try finding by user doc affiliateId or affiliateCode
+      if (!affDoc && uid) {
+        try {
+          const uDoc = await getDoc(doc(db, "users", uid));
+          if (uDoc.exists()) {
+            const uData = uDoc.data();
+            if (uData.affiliateId) {
+              const directSnap = await getDoc(doc(db, "affiliates", uData.affiliateId));
+              if (directSnap.exists()) {
+                affDoc = directSnap;
+              }
+            } else if (uData.affiliateCode) {
+              const codeQ = query(
+                collection(db, "affiliates"),
+                where("code", "==", uData.affiliateCode.toUpperCase().trim()),
+                limit(1)
+              );
+              const codeSnap = await getDocs(codeQ);
+              if (!codeSnap.empty) {
+                affDoc = codeSnap.docs[0];
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("[PORTAL-ME-USER-CHECK-ERROR]", e);
+        }
+      }
+
+      // 3. Auto-provision for master/admin/arthur if missing
+      if (!affDoc) {
+        if (role === 'master' || role === 'admin' || cleanEmail === 'arthurolimpio787@gmail.com') {
           const affRef = doc(collection(db, "affiliates"));
           const newAffiliate = {
             id: affRef.id,
             name: name || "Arthur Olimpio",
-            email: email,
+            email: cleanEmail || 'arthurolimpio787@gmail.com',
             code: "APICE",
             commissionRate: 30,
             status: "active",
@@ -732,13 +805,13 @@ export function setupAffiliateRoutes(
             updatedAt: new Date().toISOString()
           };
           await setDoc(affRef, newAffiliate);
-          snap = await getDocs(q);
+          const newSnap = await getDoc(affRef);
+          affDoc = newSnap;
         } else {
-          return res.status(403).json({ error: "Acesso restrito. Este e-mail não possui cadastro de afiliado." });
+          return res.status(403).json({ error: "Acesso restrito. Este e-mail não possui cadastro de afiliado ativo." });
         }
       }
 
-      const affDoc = snap.docs[0];
       const affData = affDoc.data();
 
       if (affData.status !== 'active') {

@@ -135,12 +135,20 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
           <p className="text-sm text-slate-400 leading-relaxed mb-6">
             Você precisa estar conectado à sua conta para acessar o seu painel de afiliado.
           </p>
-          <button
-            onClick={() => onNavigate('home')}
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors cursor-pointer text-sm"
-          >
-            Fazer Login / Voltar
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => onNavigate('home')}
+              className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors cursor-pointer text-sm shadow-lg shadow-purple-600/30"
+            >
+              Fazer Login / Entrar na Conta
+            </button>
+            <button
+              onClick={() => { window.location.href = '/'; }}
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 font-medium rounded-xl transition-colors cursor-pointer text-xs"
+            >
+              Ir para a Página Principal
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -150,26 +158,43 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
   if (error || !data) {
     return (
       <div className="min-h-screen bg-[#01142e] text-white flex flex-col items-center justify-center p-6">
-        <div className="max-w-md w-full bg-[#0a1f3d] border border-red-500/20 rounded-2xl p-8 text-center shadow-2xl">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-5 text-red-400">
+        <div className="max-w-md w-full bg-[#0a1f3d] border border-purple-500/20 rounded-2xl p-8 text-center shadow-2xl">
+          <div className="w-16 h-16 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-5 text-purple-400">
             <Lock size={28} />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Área Restrita a Afiliados</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-6">
+          <h2 className="text-xl font-bold text-white mb-2">Área de Afiliados</h2>
+          <p className="text-sm text-slate-300 leading-relaxed mb-4">
             {error || 'Seu e-mail não possui um cadastro de afiliado ativo e validado pelo administrador.'}
           </p>
-          <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-xs text-slate-300 mb-6 text-left">
-            <div className="font-semibold text-white mb-1 flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-purple-400" /> Como ter acesso:
+          
+          {user.email && (
+            <div className="text-xs bg-white/5 border border-white/10 py-2 px-3 rounded-lg text-slate-400 mb-5 break-all">
+              Conectado como: <strong className="text-white">{user.email}</strong>
             </div>
-            O administrador do sistema precisa aprovar e ativar o seu e-mail na aba de Afiliados. Assim que ativado, este painel ficará disponível automaticamente.
+          )}
+
+          <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/20 text-xs text-slate-300 mb-6 text-left">
+            <div className="font-semibold text-purple-300 mb-1 flex items-center gap-1.5">
+              <ShieldCheck size={14} className="text-purple-400" /> Como ativar seu painel:
+            </div>
+            O administrador do sistema ativa o seu e-mail pelo painel administrativo. Assim que ativado, o seu código exclusivo e links de comissão estarão liberados aqui.
           </div>
-          <button
-            onClick={() => onNavigate('home')}
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors cursor-pointer text-sm"
-          >
-            Voltar para o Início
-          </button>
+          
+          <div className="space-y-3">
+            <button
+              onClick={loadData}
+              className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors cursor-pointer text-sm shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2"
+            >
+              <Sparkles size={16} />
+              Tentar Novamente / Recarregar
+            </button>
+            <button
+              onClick={() => onNavigate('home')}
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 font-medium rounded-xl transition-colors cursor-pointer text-xs"
+            >
+              Voltar para o Início
+            </button>
+          </div>
         </div>
       </div>
     );

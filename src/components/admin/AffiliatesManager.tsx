@@ -432,6 +432,15 @@ export function AffiliatesManager() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => window.open('/painel-afiliado', '_blank')}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-colors"
+            title="Abrir Painel do Afiliado no Navegador"
+          >
+            <ExternalLink size={15} />
+            Abrir Painel do Afiliado
+          </button>
+
+          <button
             onClick={exportCSV}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors"
           >

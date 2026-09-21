@@ -67,15 +67,47 @@ export const affiliateClientService = {
   parseAffiliateCodeFromPath: (pathname: string): string | null => {
     if (!pathname) return null;
     const clean = pathname.trim();
-    
+    const cleanLower = clean.toLowerCase();
+
+    // Reserved paths that lead to the affiliate panel or standard site pages (NOT referral links)
+    const reservedRoutes = [
+      '/afiliados',
+      '/afiliado',
+      '/afiliado/',
+      '/afiliados/',
+      '/painel-afiliado',
+      '/painel-afiliados',
+      '/painel-de-afiliado',
+      '/painel-de-afiliados',
+      '/area-afiliado',
+      '/area-do-afiliado',
+      '/area-afiliados',
+      '/portal-afiliado',
+      '/portal-do-afiliado',
+      '/portal-afiliados',
+      '/afiliado/painel',
+      '/afiliado/portal',
+      '/afiliado/area',
+      '/afiliados/painel'
+    ];
+
+    if (reservedRoutes.includes(cleanLower)) {
+      return null;
+    }
+
     // Pattern 1: /afiliado/363663 or /afiliado/joao-silva
     const matchSlash = clean.match(/^\/afiliado\/([a-zA-Z0-9_-]+)/i);
     if (matchSlash && matchSlash[1]) {
-      return matchSlash[1].trim();
+      const slug = matchSlash[1].trim();
+      const slugLower = slug.toLowerCase();
+      if (['painel', 'portal', 'area', 'admin', 'dashboard', 'status', 'me', 'home'].includes(slugLower)) {
+        return null;
+      }
+      return slug;
     }
 
-    // Pattern 2: /afiliado363663
-    const matchDirect = clean.match(/^\/afiliado([a-zA-Z0-9_-]+)/i);
+    // Pattern 2: /afiliado363663 (requires digits or at least 2 alphanumeric chars beyond 's')
+    const matchDirect = clean.match(/^\/afiliado([0-9][a-zA-Z0-9_-]*)$/i);
     if (matchDirect && matchDirect[1]) {
       return matchDirect[1].trim();
     }

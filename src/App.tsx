@@ -13,7 +13,6 @@ import { AnalyticsScreen } from './components/AnalyticsScreen';
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { BlogScreen } from "./components/BlogScreen";
 import { SalesScreen } from "./components/SalesScreen";
-import { PdfCoursesScreen } from "./components/PdfCoursesScreen";
 import { AffiliatePortalScreen } from "./components/AffiliatePortalScreen";
 import { storageService } from './services/storageService';
 import { firebaseStorageService } from './services/firebaseStorageService';
@@ -33,7 +32,7 @@ import { affiliateClientService } from './services/affiliateClientService';
 
 import confetti from 'canvas-confetti';
 
-export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal' | 'pdf-courses' | 'affiliate-portal';
+export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal' | 'affiliate-portal';
 
 
 export const tabToUrlMap: Record<NavTab, string> = {
@@ -51,7 +50,6 @@ export const tabToUrlMap: Record<NavTab, string> = {
   'blog': '/blog',
   'sales-anual': '/plano-anual',
   'sales-mensal': '/plano-mensal',
-  'pdf-courses': '/cursos-pdf',
   'affiliate-portal': '/painel-afiliado'
 };
 
@@ -61,10 +59,34 @@ export const urlToTabMap: Record<string, NavTab> = Object.entries(tabToUrlMap).r
 }, {} as Record<string, NavTab>);
 
 function getTabInfoFromUrl(): { tab: NavTab, params?: any } {
-  const path = window.location.pathname;
-  if (path === '/painel-afiliado' || path === '/area-afiliado' || path === '/portal-afiliado') {
-     return { tab: 'affiliate-portal' };
+  const path = window.location.pathname.toLowerCase().trim();
+  
+  // All URL variations for accessing the Affiliate Portal
+  const affiliatePortalPaths = [
+    '/painel-afiliado',
+    '/painel-afiliados',
+    '/painel-de-afiliado',
+    '/painel-de-afiliados',
+    '/area-afiliado',
+    '/area-do-afiliado',
+    '/area-afiliados',
+    '/portal-afiliado',
+    '/portal-do-afiliado',
+    '/portal-afiliados',
+    '/afiliados',
+    '/afiliado',
+    '/afiliado/',
+    '/afiliados/',
+    '/afiliado/painel',
+    '/afiliado/portal',
+    '/afiliado/area',
+    '/afiliados/painel'
+  ];
+
+  if (affiliatePortalPaths.includes(path)) {
+    return { tab: 'affiliate-portal' };
   }
+
   if (path.startsWith('/blog-')) {
      const postId = path.replace('/blog-', '');
      return { tab: 'blog', params: { postId } };
@@ -81,11 +103,8 @@ function getTabInfoFromUrl(): { tab: NavTab, params?: any } {
      if (slug === 'prf') packId = 'pack_prf_agente';
      return { tab: 'packs-store', params: { viewingPack: packId } };
   }
-  if (path.startsWith('/cursos-pdf-')) {
-     const courseId = path.replace('/cursos-pdf-', '');
-     return { tab: 'pdf-courses', params: { courseId } };
-  }
-  if (path.startsWith('/afiliado')) {
+  if (path.startsWith('/afiliado/')) {
+     // Referral link format: /afiliado/:code -> Lands on home with attribution tracking
      return { tab: 'home' };
   }
   if (path.startsWith('/questoes/')) { return { tab: 'seo-questions', params: { slug: path.replace('/questoes/', '') } }; }
@@ -779,14 +798,6 @@ function MainApp() {
         );
       case 'blog':
         return <BlogScreen onNavigate={handleTabChange} initialPostId={targetBlogId} />;
-
-      case 'pdf-courses':
-        return (
-          <PdfCoursesScreen 
-            onNavigate={handleTabChange} 
-            initialCourseId={navHistory[navHistory.length - 1]?.params?.courseId} 
-          />
-        );
 
       case 'sales-anual':
       case 'sales-mensal':

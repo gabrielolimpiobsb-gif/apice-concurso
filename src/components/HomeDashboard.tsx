@@ -475,7 +475,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           <UserTestimonials />
 
           {/* Legal Footer */}
-          <Footer />
+          <Footer onNavigate={onNavigate} />
 
         </div>
       </div>
@@ -513,9 +513,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                  </button>
                   <button onClick={() => { setIsMenuOpen(false); onNavigate('flashcards'); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
                     <Layers size={20} className="text-white" /> Flashcards
-                  </button>
-                  <button onClick={() => { setIsMenuOpen(false); onNavigate('pdf-courses'); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
-                    <BookOpen size={20} className="text-white" /> Cursos em PDF
                   </button>
                  <button onClick={() => { setIsMenuOpen(false); onNavigate('packs-store'); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
                    <ShoppingBag size={20} className="text-white" /> Pacotes Prontos

@@ -5,12 +5,20 @@ import { Logo } from './Logo';
 
 type ActiveModalType = 'terms' | 'privacy' | 'careers' | 'contact' | 'help' | null;
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const [activeModal, setActiveModal] = useState<ActiveModalType>(null);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
     setFaqOpen(faqOpen === index ? null : index);
+  };
+
+  const handleGoToAffiliate = () => {
+    if (onNavigate) {
+      onNavigate('affiliate-portal');
+    } else {
+      window.location.href = '/painel-afiliado';
+    }
   };
 
   return (
@@ -47,6 +55,12 @@ export const Footer: React.FC = () => {
               className="text-white/70 hover:text-white/85 hover:underline transition-colors cursor-pointer text-left"
             >
               Política de Privacidade
+            </button>
+            <button
+              onClick={handleGoToAffiliate}
+              className="text-emerald-400 hover:text-emerald-300 hover:underline font-medium transition-colors cursor-pointer text-left flex items-center gap-1.5"
+            >
+              Painel de Afiliados
             </button>
           </div>
         </div>
