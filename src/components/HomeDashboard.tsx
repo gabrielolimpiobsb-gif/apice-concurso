@@ -5,7 +5,8 @@ import {
   Layers, RotateCcw, Bookmark, Trash2, Trophy, Crown, ArrowUp, 
   ArrowDown, Flame, Menu, X, FileText, BarChart2, Calendar, Sparkles,
   Award, BookOpen, Clock3, Compass, CheckCircle2, ChevronLeft, Zap, HelpCircle,
-  Settings, User, Check, ClipboardCheck, MonitorPlay, GraduationCap, History, Bell, Newspaper, Loader2, ShoppingBag
+  Settings, User, Check, ClipboardCheck, MonitorPlay, GraduationCap, History, Bell, Newspaper, Loader2, ShoppingBag,
+  DollarSign
 } from 'lucide-react';
 import { Question, Performance, StudySession } from '../types';
 import { useAuth } from '../lib/AuthContext';
@@ -32,6 +33,7 @@ interface HomeDashboardProps {
   aiDiagnosis: string | null;
   onStartReview?: (questions: Question[]) => void;
   onResumeSession: (session: StudySession) => void;
+  isAffiliate?: boolean;
 }
 
 export const HomeDashboard: React.FC<HomeDashboardProps> = ({ 
@@ -39,7 +41,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   performance, 
   onNavigate,
   onResumeSession,
-  onStartReview
+  onStartReview,
+  isAffiliate
 }) => {
   const { user } = useAuth();
   const { isPremium } = useSubscription();
@@ -529,6 +532,14 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                  <button onClick={() => { setIsMenuOpen(false); onNavigate('filter', { filterTab: 'avancado' }); }} className="flex items-center gap-4 text-black dark:text-black/80 dark:text-white/80 hover:text-white hover:bg-white/5 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer">
                    <FileText size={20} className="text-white" /> Cursos e Simulados
                  </button>
+                 {isAffiliate && (
+                   <button 
+                     onClick={() => { setIsMenuOpen(false); onNavigate('affiliate-portal'); }} 
+                     className="flex items-center gap-4 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 w-full text-left p-4 rounded-xl transition-colors font-bold cursor-pointer border border-emerald-500/25 shadow-sm mt-2"
+                   >
+                     <DollarSign size={20} className="text-emerald-400 shrink-0" /> Área do Afiliado
+                   </button>
+                 )}
                </nav>
             </motion.div>
           </React.Fragment>

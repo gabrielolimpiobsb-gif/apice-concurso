@@ -9,11 +9,13 @@ import { useSubscription } from '../lib/useSubscription';
 import { updateProfile, updatePassword } from 'firebase/auth';
 import {
   User, Shield, Crown, Bell, 
-  LogOut, ChevronRight, ChevronLeft, Camera, X
+  LogOut, ChevronRight, ChevronLeft, Camera, X,
+  DollarSign
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getRank } from '../lib/ranks';
 import { getDoc } from 'firebase/firestore';
+import { affiliateClientService } from '../services/affiliateClientService';
 
 import { Login } from './Login';
 
@@ -69,6 +71,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ performance, onNav
       }
     }
     checkRole();
+  }, [user]);
+
+  const [isAffiliate, setIsAffiliate] = React.useState(false);
+
+  React.useEffect(() => {
+    async function checkAffiliateStatus() {
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          const res = await affiliateClientService.checkPortalStatus(token);
+          setIsAffiliate(!!res.isAffiliate);
+        } catch(e) {
+          setIsAffiliate(false);
+        }
+      } else {
+        setIsAffiliate(false);
+      }
+    }
+    checkAffiliateStatus();
   }, [user]);
 
   
@@ -263,6 +284,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ performance, onNav
           </div>
         </div>
 
+
+        {isAffiliate && (
+          <div className="mb-6">
+            <SectionTitle>Parceria e Afiliado</SectionTitle>
+            <SettingsRow 
+              icon={DollarSign} 
+              title="Painel do Afiliado" 
+              subtitle="Ver comissões, link oficial e alunos indicados" 
+              onClick={() => onNavigate('affiliate-portal')} 
+            />
+          </div>
+        )}
 
         {isAdmin && (
           <div className="mb-6">

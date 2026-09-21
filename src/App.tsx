@@ -14,6 +14,7 @@ import { AdminPanel } from "./components/admin/AdminPanel";
 import { BlogScreen } from "./components/BlogScreen";
 import { SalesScreen } from "./components/SalesScreen";
 import { PdfCoursesScreen } from "./components/PdfCoursesScreen";
+import { AffiliatePortalScreen } from "./components/AffiliatePortalScreen";
 import { storageService } from './services/storageService';
 import { firebaseStorageService } from './services/firebaseStorageService';
 import { useAuth } from './lib/AuthContext';
@@ -32,7 +33,7 @@ import { affiliateClientService } from './services/affiliateClientService';
 
 import confetti from 'canvas-confetti';
 
-export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal' | 'pdf-courses';
+export type NavTab = 'home' | 'seo-questions' | 'questions' | 'filter' | 'profile' | 'study-plan' | 'flashcards' | 'packs-store' | 'ranking' | 'analytics' | 'admin' | 'blog' | 'sales-anual' | 'sales-mensal' | 'pdf-courses' | 'affiliate-portal';
 
 
 export const tabToUrlMap: Record<NavTab, string> = {
@@ -50,7 +51,8 @@ export const tabToUrlMap: Record<NavTab, string> = {
   'blog': '/blog',
   'sales-anual': '/plano-anual',
   'sales-mensal': '/plano-mensal',
-  'pdf-courses': '/cursos-pdf'
+  'pdf-courses': '/cursos-pdf',
+  'affiliate-portal': '/painel-afiliado'
 };
 
 export const urlToTabMap: Record<string, NavTab> = Object.entries(tabToUrlMap).reduce((acc, [tab, url]) => {
@@ -60,6 +62,9 @@ export const urlToTabMap: Record<string, NavTab> = Object.entries(tabToUrlMap).r
 
 function getTabInfoFromUrl(): { tab: NavTab, params?: any } {
   const path = window.location.pathname;
+  if (path === '/painel-afiliado' || path === '/area-afiliado' || path === '/portal-afiliado') {
+     return { tab: 'affiliate-portal' };
+  }
   if (path.startsWith('/blog-')) {
      const postId = path.replace('/blog-', '');
      return { tab: 'blog', params: { postId } };
@@ -172,6 +177,28 @@ function MainApp() {
   const [rankUpNotification, setRankUpNotification] = useState<RankConfig | null>(null);
   const [showPremiumSuccessModal, setShowPremiumSuccessModal] = useState(false);
   const [affiliateBanner, setAffiliateBanner] = useState<{ code: string; name: string } | null>(null);
+  const [isAffiliate, setIsAffiliate] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function checkAffiliateStatus() {
+      if (!user) {
+        if (isMounted) setIsAffiliate(false);
+        return;
+      }
+      try {
+        const token = await user.getIdToken();
+        const status = await affiliateClientService.checkPortalStatus(token);
+        if (isMounted) {
+          setIsAffiliate(!!status.isAffiliate);
+        }
+      } catch {
+        if (isMounted) setIsAffiliate(false);
+      }
+    }
+    checkAffiliateStatus();
+    return () => { isMounted = false; };
+  }, [user]);
 
   useEffect(() => {
     // Check affiliate link in URL
@@ -633,6 +660,7 @@ function MainApp() {
                handleTabChange('questions');
             }}
             onResumeSession={handleResumeSession}
+            isAffiliate={isAffiliate}
           />
         );
       case 'filter': {
@@ -767,6 +795,10 @@ function MainApp() {
             planType={activeTab === 'sales-anual' ? 'anual' : 'mensal'} 
             onNavigate={handleTabChange} 
           />
+        );
+      case 'affiliate-portal':
+        return (
+          <AffiliatePortalScreen onNavigate={handleTabChange} />
         );
       case 'admin':
         if (profileLoading) {

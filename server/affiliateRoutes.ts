@@ -579,6 +579,203 @@ export function setupAffiliateRoutes(
   app.use('/api/affiliates', router);
 
   // ==========================================
+  // AFFILIATE SELF-SERVICE PORTAL ENDPOINTS
+  // (Protected strictly by verified email of active validated affiliate)
+  // ==========================================
+
+  const portalRouter = express.Router();
+  portalRouter.use(authenticate);
+
+  // 1. Check status: does current user email belong to an active affiliate validated by admin?
+  portalRouter.get('/status', async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.email) {
+        return res.json({ isAffiliate: false });
+      }
+
+      const email = user.email.toLowerCase().trim();
+      const db = getDb();
+      
+      const q = query(
+        collection(db, "affiliates"), 
+        where("email", "==", email), 
+        limit(1)
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        return res.json({ isAffiliate: false });
+      }
+
+      const affDoc = snap.docs[0];
+      const affData = affDoc.data();
+
+      // STRICT VALIDATION: Only true if validated by admin as active
+      if (affData.status !== 'active') {
+        return res.json({ isAffiliate: false, status: affData.status, reason: 'unvalidated' });
+      }
+
+      return res.json({
+        isAffiliate: true,
+        affiliateId: affDoc.id,
+        code: affData.code,
+        name: affData.name,
+        commissionRate: affData.commissionRate || 30
+      });
+    } catch (err) {
+      console.error("[AFFILIATE-PORTAL-STATUS-ERROR]", err);
+      return res.json({ isAffiliate: false });
+    }
+  });
+
+  // 2. Fetch authenticated affiliate's personal metrics, exclusive link, referrals, and commissions
+  portalRouter.get('/me', async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.email) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      const email = user.email.toLowerCase().trim();
+      const db = getDb();
+
+      // Find affiliate strictly by the authenticated email
+      const q = query(
+        collection(db, "affiliates"), 
+        where("email", "==", email), 
+        limit(1)
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        return res.status(403).json({ error: "Acesso restrito. Este e-mail não possui cadastro de afiliado." });
+      }
+
+      const affDoc = snap.docs[0];
+      const affData = affDoc.data();
+
+      if (affData.status !== 'active') {
+        return res.status(403).json({ error: "Acesso pendente de validação pelo administrador." });
+      }
+
+      const affiliateId = affDoc.id;
+
+      // 1. Fetch sales / subscriptions credited to this affiliate
+      const subsQuery = query(
+        collection(db, "affiliate_subscriptions"),
+        where("affiliateId", "==", affiliateId)
+      );
+      const subsSnap = await getDocs(subsQuery);
+      const subscriptions: any[] = [];
+      subsSnap.forEach(d => {
+        subscriptions.push(d.data());
+      });
+
+      // Sort subscriptions by date desc
+      subscriptions.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+      // 2. Fetch users registered by this affiliate
+      const usersQuery = query(
+        collection(db, "users"),
+        where("affiliateId", "==", affiliateId)
+      );
+      const usersSnap = await getDocs(usersQuery);
+      const attributedUsers: any[] = [];
+      usersSnap.forEach(d => {
+        const u = d.data();
+        attributedUsers.push({
+          uid: d.id,
+          name: u.displayName || u.name || 'Aluno Indicado',
+          email: u.email ? u.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : '', // privacy safe
+          planStatus: u.planStatus || 'free',
+          hasActiveSubscription: u.planStatus === 'premium',
+          createdAt: u.createdAt || null
+        });
+      });
+
+      // Sort users by date desc
+      attributedUsers.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+      // 3. Compute real-time verified stats
+      let totalCommission = 0;
+      let totalRevenue = 0;
+      subscriptions.forEach(s => {
+        totalCommission += (Number(s.commission) || 0);
+        totalRevenue += (Number(s.amount) || 0);
+      });
+
+      const metrics = {
+        visits: affData.metrics?.visits || 0,
+        uniqueVisitors: affData.metrics?.uniqueVisitors || affData.metrics?.visits || 0,
+        signups: attributedUsers.length,
+        subscriptions: subscriptions.length,
+        totalRevenue: Math.round(totalRevenue * 100) / 100,
+        totalCommission: Math.round(totalCommission * 100) / 100
+      };
+
+      return res.json({
+        affiliate: {
+          id: affDoc.id,
+          name: affData.name,
+          email: affData.email,
+          code: affData.code,
+          commissionRate: affData.commissionRate || 30,
+          status: affData.status,
+          pixKey: affData.pixKey || '',
+          pixType: affData.pixType || 'cpf',
+          createdAt: affData.createdAt
+        },
+        metrics,
+        subscriptions,
+        attributedUsers
+      });
+    } catch (err: any) {
+      console.error("[AFFILIATE-PORTAL-ME-ERROR]", err);
+      return res.status(500).json({ error: "Erro interno ao carregar dados do afiliado" });
+    }
+  });
+
+  // 3. Update PIX payment info
+  portalRouter.post('/pix', async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.email) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      const { pixKey, pixType } = req.body;
+      const email = user.email.toLowerCase().trim();
+      const db = getDb();
+
+      const q = query(
+        collection(db, "affiliates"), 
+        where("email", "==", email), 
+        limit(1)
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        return res.status(403).json({ error: "Afiliado não encontrado" });
+      }
+
+      const affDoc = snap.docs[0];
+      await updateDoc(affDoc.ref, {
+        pixKey: String(pixKey || '').trim(),
+        pixType: String(pixType || 'cpf').trim(),
+        updatedAt: new Date().toISOString()
+      });
+
+      return res.json({ success: true, pixKey, pixType });
+    } catch (err: any) {
+      console.error("[AFFILIATE-PORTAL-PIX-ERROR]", err);
+      return res.status(500).json({ error: "Erro ao salvar chave PIX" });
+    }
+  });
+
+  app.use('/api/affiliate-portal', portalRouter);
+
+  // ==========================================
   // ADMIN AFFILIATE MANAGEMENT ENDPOINTS
   // (Protected by requireAdmin middleware)
   // ==========================================

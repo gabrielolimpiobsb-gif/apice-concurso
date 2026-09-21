@@ -253,5 +253,47 @@ export const affiliateClientService = {
         })
       }).catch(() => {});
     } catch (e) {}
+  },
+
+  // Affiliate Self-Service Portal APIs
+  checkPortalStatus: async (token: string): Promise<{ isAffiliate: boolean; code?: string; name?: string; status?: string }> => {
+    try {
+      const res = await fetch('/api/affiliate-portal/status', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+      return { isAffiliate: false };
+    } catch (e) {
+      return { isAffiliate: false };
+    }
+  },
+
+  getPortalData: async (token: string): Promise<any> => {
+    const res = await fetch('/api/affiliate-portal/me', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Falha ao carregar painel do afiliado');
+    }
+    return await res.json();
+  },
+
+  updatePix: async (token: string, pixKey: string, pixType: string): Promise<any> => {
+    const res = await fetch('/api/affiliate-portal/pix', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ pixKey, pixType })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao salvar chave PIX');
+    }
+    return await res.json();
   }
 };
