@@ -30,7 +30,7 @@ interface AffiliatePortalScreenProps {
 }
 
 export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{
@@ -51,6 +51,7 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
   const [pixSuccess, setPixSuccess] = useState(false);
 
   const loadData = async () => {
+    if (authLoading) return;
     if (!user) {
       setLoading(false);
       return;
@@ -77,8 +78,10 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
   };
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    if (!authLoading) {
+      loadData();
+    }
+  }, [user, authLoading]);
 
   const officialLink = data?.affiliate?.code 
     ? `https://apiceconcurso.com/afiliado/${data.affiliate.code}`
@@ -115,7 +118,7 @@ export const AffiliatePortalScreen: React.FC<AffiliatePortalScreenProps> = ({ on
     return (u.name || '').toLowerCase().includes(term) || (u.email || '').toLowerCase().includes(term);
   });
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-[#01142e] text-white flex flex-col items-center justify-center p-6">
         <div className="w-12 h-12 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
