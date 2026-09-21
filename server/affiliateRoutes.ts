@@ -736,12 +736,12 @@ export function setupAffiliateRoutes(
       }
     }
 
-    // 7. Auto-provisioning / repair for Admins, Masters, or Users explicitly marked as isAffiliate: true
-    if (!targetDoc && (isAdminOrMaster || isUserMarkedAffiliate)) {
+    // 7. Auto-provisioning / instant activation for any authenticated account accessing the portal
+    if (!targetDoc && (cleanEmail || uid)) {
       try {
         let code = userAffCode;
         if (!code) {
-          const rawPrefix = (name || 'APICE').split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const rawPrefix = (name || cleanEmail || 'APICE').split('@')[0].split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
           const prefix = rawPrefix.length >= 3 ? rawPrefix.substring(0, 5) : 'APICE';
           code = `${prefix}${Math.floor(100 + Math.random() * 900)}`;
         }
@@ -794,24 +794,34 @@ export function setupAffiliateRoutes(
     }
 
     const affData = targetDoc.data();
+    
+    // Auto-link affiliate doc and user doc if not yet linked
+    if (uid) {
+      try {
+        const affUid = affData.userId || affData.uid;
+        if (!affUid || affUid !== uid) {
+          updateDoc(targetDoc.ref || doc(db, "affiliates", targetDoc.id), {
+            userId: uid,
+            updatedAt: new Date().toISOString()
+          }).catch(() => {});
+        }
+        if (!userData?.isAffiliate || userData?.affiliateCode !== affData.code) {
+          setDoc(doc(db, "users", uid), {
+            isAffiliate: true,
+            affiliateCode: affData.code,
+            affiliateId: targetDoc.id
+          }, { merge: true }).catch(() => {});
+        }
+      } catch (linkErr) {}
+    }
+
     const rawStatus = String(affData.status || '').toLowerCase().trim();
     const isExplicitlyBlocked = rawStatus === 'blocked' || 
                                 rawStatus === 'bloqueado' || 
-                                rawStatus === 'inactive' || 
-                                rawStatus === 'inativo' || 
                                 rawStatus === 'rejected' || 
-                                rawStatus === 'rejeitado' ||
-                                affData.status === false;
+                                rawStatus === 'rejeitado';
 
-    const isActive = !isExplicitlyBlocked || 
-                     rawStatus === 'active' || 
-                     rawStatus === 'approved' || 
-                     rawStatus === 'ativo' || 
-                     rawStatus === 'ativado' || 
-                     affData.status === true || 
-                     affData.isAffiliate === true || 
-                     isUserMarkedAffiliate || 
-                     isAdminOrMaster;
+    const isActive = !isExplicitlyBlocked;
 
     return { affDoc: targetDoc, affData, isActive };
   }

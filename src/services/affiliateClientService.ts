@@ -290,11 +290,17 @@ export const affiliateClientService = {
   // Affiliate Self-Service Portal APIs
   checkPortalStatus: async (token: string): Promise<{ isAffiliate: boolean; code?: string; name?: string; status?: string }> => {
     try {
+      if (!token) return { isAffiliate: false };
       const res = await fetch('/api/affiliate-portal/status', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        return await res.json();
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return { isAffiliate: false };
+        }
       }
       return { isAffiliate: false };
     } catch (e) {
@@ -303,20 +309,37 @@ export const affiliateClientService = {
   },
 
   getPortalData: async (token: string): Promise<any> => {
+    if (!token) {
+      throw new Error('Faça login na sua conta para acessar a Área de Afiliados.');
+    }
     const res = await fetch('/api/affiliate-portal/me', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
+
+    const text = await res.text();
+    let data: any = null;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      // If server returned non-JSON (e.g. HTML 502/404/login page)
+      if (res.status === 401) {
+        throw new Error('Faça login na sua conta para acessar a Área de Afiliados.');
+      } else if (res.status === 403) {
+        throw new Error('Acesso restrito. Seu e-mail não possui cadastro de afiliado ativo.');
+      } else {
+        throw new Error('Serviço temporariamente indisponível. Por favor, recarregue a página.');
+      }
+    }
+
     if (!res.ok) {
-      let errorMsg = '';
-      try {
-        const err = await res.json();
-        errorMsg = err.error || err.message || '';
-      } catch (e) {}
+      const errorMsg = data?.error || data?.message;
       throw new Error(errorMsg || (res.status === 403 
         ? 'Acesso restrito. Seu e-mail não possui cadastro de afiliado ativo.'
+        : res.status === 401
+        ? 'Faça login na sua conta para acessar a Área de Afiliados.'
         : `Falha ao carregar painel do afiliado (${res.status})`));
     }
-    return await res.json();
+    return data;
   },
 
   updatePix: async (token: string, pixKey: string, pixType: string): Promise<any> => {
@@ -328,15 +351,20 @@ export const affiliateClientService = {
       },
       body: JSON.stringify({ pixKey, pixType })
     });
+
+    const text = await res.text();
+    let data: any = null;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error('Erro ao salvar chave PIX. Tente novamente.');
+    }
+
     if (!res.ok) {
-      let errorMsg = '';
-      try {
-        const err = await res.json();
-        errorMsg = err.error || err.message || '';
-      } catch (e) {}
+      const errorMsg = data?.error || data?.message;
       throw new Error(errorMsg || 'Erro ao salvar chave PIX');
     }
-    return await res.json();
+    return data;
   },
 
   // Métodos Administrativos: Ativação de Afiliado por E-mail / Conta
@@ -352,9 +380,15 @@ export const affiliateClientService = {
       },
       body: JSON.stringify(data)
     });
-    const result = await res.json();
+    const text = await res.text();
+    let result: any = null;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      throw new Error('Erro ao processar ativação de afiliado');
+    }
     if (!res.ok) {
-      throw new Error(result.error || 'Falha ao ativar afiliado por e-mail');
+      throw new Error(result?.error || 'Falha ao ativar afiliado por e-mail');
     }
     return result;
   },
@@ -366,7 +400,12 @@ export const affiliateClientService = {
     if (!res.ok) {
       return [];
     }
-    return await res.json();
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return [];
+    }
   },
 
   adminToggleUserAffiliate: async (
@@ -382,9 +421,15 @@ export const affiliateClientService = {
       },
       body: JSON.stringify(options || {})
     });
-    const result = await res.json();
+    const text = await res.text();
+    let result: any = null;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      throw new Error('Erro ao processar alteração de status');
+    }
     if (!res.ok) {
-      throw new Error(result.error || 'Falha ao alterar status de afiliado do usuário');
+      throw new Error(result?.error || 'Falha ao alterar status de afiliado do usuário');
     }
     return result;
   }
